@@ -1,35 +1,32 @@
 #!/usr/bin/env bash
 # ============================================================================
-# .github/workflows/ci.yml 三条 job（+ 密钥扫描）的本地等价命令（Git Bash 可跑）。
+# .github/workflows/ci.yml 三条 job（+ 密钥扫描）的本地等价命令（Git Bash / WSL 可跑）。
 #
 # 用法：  bash tools/ci_local.sh [scan|test|docker|smoke|all]   （默认 all）
+#        指定解释器：PY=/path/to/python bash tools/ci_local.sh test
 #
 # 与 CI 的口径差异（如实记录）：
-#   1) venv（D:/Tools/venvs/aesthetics）里的 editable 安装指向一份**旧的会话副本**
-#      （__editable__*.pth → C:/Users/admin/.minimax/sessions/.../workspace/src），
-#      直接跑 `aesthetics` / `-m aesthetics_pipeline` 会用旧代码（实测旧 cli.py 里
-#      qc 缺 missing_face_reason 导入，NameError exit 1）。
-#      所以本脚本一律用 PYTHONPATH 强制指向本仓库 src/，等效于 CI 的 fresh checkout。
-#   2) CI test job 用 python3.11；本机 venv 版本以实际为准（≥3.11 即可，requires-python=">=3.11"）。
-#   3) smoke job 在 CI 里**不装 insightface**（人脸闸走 skipped 兜底，保证离线）。
-#      本机 venv 装了且有权重：想模拟 CI 口径，先 export AP_SIMULATE_NO_INSIGHTFACE=1
-#      并准备一个"raise ModuleNotFoundError"的假 insightface.py 放进 PYTHONPATH 前段，
-#      或直接接受"本机带真人脸闸"这一超集口径（开发机两种都已实跑 exit 0）。
-#   4) docker job 需要本机 Docker Desktop 在跑；未装则跳过并说明。
+#   1) 如果本机 venv 里 `pip install -e .` 指向的是另一份代码副本，直接跑 `aesthetics`
+#      或 `-m aesthetics_pipeline` 会用到那份旧代码。所以本脚本一律用 PYTHONPATH 强制
+#      指向本仓库 src/，等效于 CI 的 fresh checkout。
+#   2) CI test job 用 python3.11；本机版本以实际为准（requires-python = ">=3.11"）。
+#   3) CI 的 smoke job **故意不装 insightface**（人脸闸走显式 skipped 兜底，保证严格
+#      离线）。本机若装了 insightface 且权重可用，跑出来是"带真人脸闸"的超集口径。
+#   4) docker job 需要本机 Docker 在跑；没有 docker CLI 就跳过并说明。
 # ============================================================================
 set -u
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-PY="D:/Tools/venvs/aesthetics/Scripts/python.exe"
-DB='/tmp/ci.db'   # Git Bash 会自动转换成 %LOCALAPPDATA%\Temp\ci.db 传给 Windows python
+PY="${PY:-python}"
+DB='/tmp/ci.db'   # Git Bash 会把 /tmp 转换成 Windows 临时目录后传给原生 python
 # 密钥扫描比 CI 版多排掉本地产物目录（.venv/out/__pycache__ 等不在 git 里，CI fresh checkout 没有它们）
 SCAN_EXCLUDES=(--exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=__pycache__ --exclude-dir=out --exclude-dir=.pytest_cache)
 
-# 让本仓库 src 压过 venv 里指向旧副本的 editable 安装（Windows python 认反斜杠/盘符路径）
+# 让本仓库 src 压过 venv 里可能指向别处副本的 editable 安装（Windows python 认反斜杠/盘符路径）
 export PYTHONPATH="$(cygpath -w "$REPO/src" 2>/dev/null || echo "$REPO/src")"
 
 run_scan() {
-  echo "== [scan] 密钥泄漏扫描（与 ci.yml 同一 PCRE 口径，见 yml 顶部注释的误报说明）=="
+  echo "== [scan] 密钥泄漏扫描（与 ci.yml 同一 PCRE 口径，误报说明见 yml 顶部注释）=="
   # grep 语义：命中→exit 1（失败）；无命中→echo clean
   grep -rPn "(?<![\w-])(ark-[A-Za-z0-9]{6,}|sk-ws-[A-Za-z0-9]{6,})" "${SCAN_EXCLUDES[@]}" "$REPO" \
     && { echo "!! 发现疑似密钥，门禁失败"; exit 1; } || echo clean
@@ -37,7 +34,7 @@ run_scan() {
 
 run_test() {
   echo "== [job1 test] 等价 CI: pip install -e \".[qc,panel,dev]\" && pytest -q =="
-  echo "   （venv 已装依赖；若要重装：\"$PY\" -m pip install -e \"$REPO[qc,panel,dev]\" ——注意这会改写 venv 的 editable 指向，慎用）"
+  echo "   （假设依赖已装；要重装：\"$PY\" -m pip install -e \"$REPO[qc,panel,dev]\" ——这会改写 venv 的 editable 指向，慎用）"
   cd "$REPO" && "$PY" -m pytest -q
 }
 

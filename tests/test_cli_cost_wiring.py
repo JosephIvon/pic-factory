@@ -1,4 +1,4 @@
-"""generate 与成本闸的接线回归（Trae 评审 M1/M2 裁决落点）。
+"""generate 与成本闸的接线回归（两条负向锚点，下文记作 M1/M2）。
 
 M1：http_api 后端的 BudgetGuard 必须由 cli 用**台账连接**构造后注入。
 provider 内部兜底的 `BudgetGuard.from_env()`（无 conn）是零基数守卫——

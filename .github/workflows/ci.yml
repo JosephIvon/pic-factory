@@ -1,17 +1,19 @@
 # ============================================================================
-# 医美图文流水线 CI 门禁（外部审计 CI 三项：pytest / docker build / 离线 replay 冒烟，外加密钥泄漏扫描）
+# CI 门禁：pytest 全量回归 / docker build / 离线 replay 冒烟，每个 job 前置密钥泄漏扫描
 #
-# ⚠️ 如实声明（写在本文件第一屏）：
-#   1) 本仓库当前 remote 只有 local / upstream 镜像，**不是 GitHub**——在这个仓库被推到
-#      GitHub 之前，本 workflow 永远不会触发，它只是"就绪待命"的门禁定义。
-#      三条 job 的本地等价命令见 tools/ci_local.sh（Git Bash + D:/Tools/venvs/aesthetics），
-#      replay-smoke 链已在开发机实跑通过（exit 0 ×3，见文件尾部注释与交付报告）。
-#   2) 密钥扫描说明：审计给的原始口径 `grep -rE "ark-[A-Za-z0-9]{6,}|sk-ws-..."` 会在
-#      HEAD 上**误报**——tests/test_adversarial.py:299 的假 node_id（形如 `req-` 前缀拼
-#      六个以上字母的测试常量）被 `ark-` 分支命中。不允许改测试，所以这里改用 PCRE
+# 环境依赖（踩过才写下来的）：
+#   1) test 与 replay-smoke 都显式装 libgl1：rapidocr/insightface 依赖的 cv2 在没有 GL
+#      运行库的 Linux 上 import 即失败。缺它时 test job 红 2 项（test_qc_rules 的两个
+#      OCR 用例），而 replay-smoke 会退化成"文字闸没跑但 exit 0"的假绿——所以冒烟最后
+#      一步断言文字闸真的执行过。Windows/macOS 本机自带这两个库，在开发机上看不出来。
+#   2) 路径语法断言要平台中立：`C:/tmp/x.png` 在 Windows 是绝对路径、在 POSIX 是相对
+#      路径，同一行断言在两台机器含义相反（历史教训，见 tests/test_cache.py 的注释）。
+#   3) 密钥扫描口径：裸 `grep -rE "ark-[A-Za-z0-9]{6,}|sk-ws-..."` 会在
+#      HEAD 上**误报**——tests/test_adversarial.py 的假 node_id（`req-` 前缀拼六个以上
+#      字母的测试常量）被 `ark-` 分支命中。那个常量是对抗演练的输入，不能改，
+#      所以这里改用 PCRE
 #      负向后顾 `(?<![\w-])`：真实密钥（ark- / sk-ws- 出现在 空格/=/引号/行首 之后）
 #      照样全中，前邻为 - 或单词字符的代码内碎片不再误杀。
-#      已在开发机验证：本模式对当前仓库扫描无命中（clean）。
 #
 # face 测试在 CI 裸环境的行为（按 tests/test_qc_face.py 与 src/aesthetics_pipeline/qc/face.py 实测核对）：
 #   - tests/test_qc_face.py **从不触发 buffalo_l 权重下载**：会真正触碰模型的两个用例
@@ -24,7 +26,7 @@
 #     这条兜底只影响**运行时**质检，不影响测试。
 #   - replay-smoke job 据此**故意不装 insightface**（只装 core + rapidocr-onnxruntime）：
 #     人脸闸走上述 skip 路径，OCR 文字闸正常执行（rapidocr 的 onnx 权重随 pip 包分发），
-#     全链严格离线。开发机已用"屏蔽 insightface 导入"的方式模拟该环境实跑：三命令 exit 0。
+#     全链严格离线（人脸模型不可用时闸门显式报 skipped，不伪造分数）。
 # ============================================================================
 
 name: CI
@@ -55,9 +57,17 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - name: 装 GL 运行库（cv2 的 libGL，缺了 OCR/人脸闸直接 ImportError）
+        # 实测（python:3.11 裸容器）：不装 libgl1 时 `import rapidocr_onnxruntime` 报
+        # `libGL.so.1: cannot open shared object file`，tests/test_qc_rules.py 两个用例
+        # （test_ocr_detects_text_when_ocr_available / test_engine_present_marks_ocr_available）
+        # 红。Windows/macOS 本机自带这些库，开发机上看不出来。与 Dockerfile 同一口径。
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgl1 libglib2.0-0
+
       - name: 安装（含 qc/panel 与 dev=pytest）
-        # 审计口径是 `pip install -e ".[qc,panel]"`；本仓库 dev extra 才有 pytest，
-        # 故并入 ".[qc,panel,dev]"，其余零改动。
+        # pytest 只在 dev extra 里，故并入 ".[qc,panel,dev]"。
         run: pip install -e ".[qc,panel,dev]"
 
       - name: pytest -q
@@ -99,11 +109,20 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - name: 装 GL 运行库（rapidocr→cv2 需要 libGL）
+        # 实测（python:3.11 裸容器，2026-10-24）：只 pip 装 rapidocr-onnxruntime 而不装
+        # libgl1 时，OCR 引擎加载失败 → rules.py 把 4 条全判"OCR 引擎不可用：文字闸未执行"，
+        # 冒烟 exit 0 却是**假绿**（正是下面那条断言要防的）。装了 libgl1 后文字闸真的跑：
+        # 4 条里 3 accepted / 1 rejected，拒收原因是实拍到的画面内文字「®」。
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libgl1 libglib2.0-0
+
       - name: 安装（core + rapidocr；故意不装 insightface，保持严格离线）
         # insightface 进了包，qc 会尝试联网拉 buffalo_l 权重 → 与"离线冒烟"矛盾；
         # 不装它则 face.py 走 skipped 兜底（见本文件顶部注释）。rapidocr-onnxruntime
         # 必装：缺 OCR 时 rules.py 会把每条判"OCR 引擎不可用：文字闸未执行，不能记为合格"
-        # （exit 0 但全拦，冒烟退化成假绿），装上后文字闸真的在跑。
+        # （exit 0 但全拦，冒烟退化成假绿），装上且 GL 库齐，文字闸才真的在跑。
         run: |
           pip install -e .
           pip install "rapidocr-onnxruntime"
@@ -124,24 +143,19 @@ jobs:
       - name: 出报表（拼图 + CSV + JSON）
         run: aesthetics report --db /tmp/ci.db
 
-      - name: 台账落账核验（4 条 replay 行且质检判定已写回）
+      - name: 台账落账核验（4 条 replay 行、判定写回、且文字闸真的跑过）
         run: |
           python - <<'EOF'
           import sqlite3
           conn = sqlite3.connect("/tmp/ci.db")
           rows = conn.execute(
-              "SELECT idempotency_key, qc_verdict FROM assets WHERE provider='matrix'"
+              "SELECT idempotency_key, qc_verdict, qc_reasons FROM assets WHERE provider='matrix'"
           ).fetchall()
           assert len(rows) == 4, f"期望 4 条回放落账，实际 {len(rows)}: {rows}"
-          assert all(v in ("accepted", "rejected") for _, v in rows), rows
-          print("replay-smoke 台账核验 OK:", rows)
+          assert all(v in ("accepted", "rejected") for _, v, _ in rows), rows
+          # 假绿防线：OCR 引擎加载不到时 rules.py 会给每条挂"OCR 引擎不可用"并一律拦下，
+          # 判定依然写回、exit 依然 0——冒烟就退化成"什么都没验"。这里要求文字闸真的执行。
+          no_ocr = [k for k, _, r in rows if r and "OCR 引擎不可用" in r]
+          assert not no_ocr, f"文字闸未执行（rapidocr/cv2 加载失败，多半缺 libGL）：{no_ocr}"
+          print("replay-smoke 台账核验 OK（文字闸已执行）:", [(k, v) for k, v, _ in rows])
           EOF
-
-# ============================================================================
-# 开发机等价实跑记录（2026-10-24，Git Bash + D:/Tools/venvs/aesthetics/Scripts/python.exe，
-# PYTHONPATH 强制指向 D:/workspace/pic-factory/src；insightface 用假模块屏蔽以模拟本 job 环境）：
-#   generate --provider replay --replay-provider matrix --db /tmp/ci.db --limit 4  → exit 0（replay 4/4 成功）
-#   qc --db /tmp/ci.db                                                             → exit 0（4 条放行，人脸项 skipped，OCR 在跑）
-#   report --db /tmp/ci.db                                                         → exit 0（4 合格/0 拒收，contact_sheet.png 落 out/report/）
-# 完整输出见交付报告；本地复现直接跑 tools/ci_local.sh smoke。
-# ============================================================================

@@ -39,6 +39,7 @@ docker compose run --rm batch aesthetics generate --provider auto --limit 6
 | 面板 `/api/meta` 显示 api 后端"不可用" | key 没进容器 | 确认 `.env` 有值且 compose 读到了（`docker compose config` 查注入） |
 | 批量跑到一半 `预算熔断` | 累计现金达 `AP_BUDGET_CNY` 的 80% | 这是**设计行为不是 bug**：加预算或改走 replay；台账有每笔 est_cost |
 | 阿里出图张数是请求的 4 倍 | 适配层 n 未强制（老坑） | `tests/test_http_api.py` 已钉 `n==1`；复跑测试确认没被改坏 |
+| qc 把**每条**都判"OCR 引擎不可用：文字闸未执行，不能记为合格" | Linux 缺 GL 运行库：rapidocr→cv2 需要 `libGL.so.1`，slim 镜像/裸容器默认没有 | `sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0`（Dockerfile 与 CI 两条 job 都已显式装）。这是闸门的**设计行为**：闸门没跑 ≠ 合格，所以宁可全拦也不静默放行。Windows/macOS 自带，不会遇到 |
 | 下载 403 | 对 OSS 签名 URL 带了 Authorization 头 | 见 MODEL-CHOICE 方法学：下载签名 URL 不能加 auth 头 |
 | 同一条任务重跑不扣费 | 正常——幂等键命中 `successful_keys` | 要强制重出用 `--no-skip-existing` |
 

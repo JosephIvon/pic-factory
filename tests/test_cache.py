@@ -38,9 +38,15 @@ def test_cache_path_is_repo_relative_and_resolves_back(tmp_path) -> None:
     assert resolve_local_path(entry["local_path"]) == config.REPO_ROOT / "out" / "images" / "matrix_k1.jpg"
 
 
-def test_absolute_cache_path_still_resolves() -> None:
-    """旧缓存写的是绝对路径，也要能读（不能因为改了格式就废掉已有产物）。"""
-    raw = str(Path("C:/tmp/legacy.png"))
+def test_absolute_cache_path_still_resolves(tmp_path) -> None:
+    """旧缓存写的是绝对路径，也要能读（不能因为改了格式就废掉已有产物）。
+
+    这里必须用**当前平台的绝对路径**：写死 `C:/tmp/x.png` 测的其实是本机路径语法
+    ——它在 Windows 上是绝对路径，在 POSIX 上是相对路径（会被锚回仓库根），
+    同一份断言在两种系统上含义相反，CI（Linux）会因此红。
+    """
+    raw = str(tmp_path / "legacy.png")
+    assert Path(raw).is_absolute(), raw
     assert resolve_local_path(raw) == Path(raw)
 
 
@@ -75,7 +81,7 @@ def test_cache_path_layout() -> None:
     assert cache_path(Path("c"), "k").as_posix() == "c/k.json"
 
 
-# ---------------- Trae S4：http_api 进回放口径 + 档位随行 ----------------
+# ---------------- http_api 进回放口径 + 档位随行 ----------------
 
 
 def test_replay_finds_http_api_entry_and_restores_model_id(tmp_path) -> None:

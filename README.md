@@ -4,9 +4,12 @@
 
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-> pytest 状态占位（不伪造徽章）：**174 项全过**——本地实跑口径（`pytest -q`，Python 3.11+）。
-> CI 门禁定义已就绪（`.github/workflows/ci.yml`：pytest / docker build / 离线 replay 冒烟 / 密钥泄漏扫描），
-> **推送到 GitHub 后徽章与自动化才生效**；在此之前请以 `tools/ci_local.sh` 的本地等价命令为准。
+> **174 项全过**——本地实跑口径（`pytest -q`，Python 3.11+），并在 `python:3.11` 的 Linux 容器里复验过。
+> CI 门禁（`.github/workflows/ci.yml`：pytest / docker build / 离线 replay 冒烟 / 密钥泄漏扫描）已在 GitHub
+> 真实触发。首跑（workflow run #1）暴露两处只在 Linux 上现形的问题并已修：绝对路径断言写死了 Windows
+> 路径语法（POSIX 上同一个字符串是**相对**路径），以及缺 `libgl1` 时 OCR 引擎加载失败——后者更阴险，
+> 因为闸门会"每条都拦但退出码 0"，冒烟看着绿其实什么都没验。现在两条 job 显式装 GL 库，冒烟额外断言
+> 文字闸真的执行过。徽章等连续绿了再挂，当前状态以 Actions 页面为准。
 
 ## 为什么做这个
 
@@ -113,6 +116,14 @@ pytest -q                    # 174 项
 python tools/check_readme_test_count.py            # README 测试数防漂移门禁
 python tools/check_readme_test_count.py --update   # 改完测试后同步本文件
 ```
+
+Linux 上 `[qc]` extra 还需要系统 GL 运行库（rapidocr/insightface 依赖的 cv2 要 `libGL.so.1`）：
+
+```bash
+sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0   # Debian/Ubuntu；Dockerfile 与 CI 已装
+```
+
+缺它不会静默放行——文字闸会显式记"OCR 引擎不可用：文字闸未执行，不能记为合格"并把每条拦下（宁可全拦，不假装验过）。详见 [DEPLOY.md](DEPLOY.md) 排错表。
 
 - 数量以工具实测为准：本 README 写 174，是写作时 `python -m pytest --collect-only -q`（收集 174）与 `pytest -q`（174 passed）的实测值；CI 里 `check_readme_test_count.py` 会在数字漂移时报错。
 - 全程离线可跑：人脸闸用例 monkeypatch 注入假检测器，不触发权重下载；`tests/test_adversarial.py` 是对抗演练（伪造计费张数、劫持幂等键等负向锚点）。

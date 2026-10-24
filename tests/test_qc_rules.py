@@ -39,7 +39,7 @@ def test_ocr_detects_text_when_ocr_available() -> None:
 
 
 def test_missing_ocr_engine_is_flagged_not_silent(tmp_path, monkeypatch) -> None:
-    """Trae S2：没装 [qc] extra 时文字闸"没跑"必须留痕并拦下这条行——
+    """没装 [qc] extra 时文字闸"没跑"必须留痕并拦下这条行——
     静默绿与人脸闸"检不到≠合格"的教义双标。"""
     from PIL import Image
 

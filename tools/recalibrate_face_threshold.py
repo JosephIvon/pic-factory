@@ -21,17 +21,19 @@ gallery 语义取最相似脸对）对同一批样本重算。
   * 同域难负 = _calib/impostors/*.jpg（同风格但画出来是别人——最难的一类）；
   * 角色卡锚图 = refs/persona_lin.png。
 
-**解耦声明**：默认 --lab-dir 指向源实验台（D:\\workspace\\picfactory\\ab）。
-源仓库删除前必须先跑 `--pack` 把样本包压缩入库 docs/ab-evidence/calib-samples/，
-此后本工具可用 `--lab-dir docs/ab-evidence/calib-samples-pack` 复现
-（压缩件分数记在 JSON 的 pack_scores 里，与原图分数的偏移一并给出）。
+**解耦声明**：`--lab-dir` 指向源实验台目录（外部目录，不随本仓库分发），它需要含
+`out/ab/results.jsonl`、`_calib/impostors/`、`refs/persona_lin.png` 三样。
+本仓库自带的是 `--pack` 产出的**压缩样本包** `docs/ab-evidence/calib-samples/`
+（positives/ + impostors/ + ref_lin.jpg + manifest.json 校验和），JSON 的 `pack` 段
+记的就是"在没有实验台的机器上、只用入库压缩件复算"得到的分数与偏移——刻度可复核，
+但整工具重跑需要自备实验台目录。
 
 局限如实入账：同域负样本 n=7，FAR 点估计无统计意义；要声称 FAR≤2% 需
-≥150 个同域负样本（用户已裁决：开发完成后处理）。
+≥150 个同域负样本（已列入后续计划）。
 
 用法：
-  python tools/recalibrate_face_threshold.py                 # 原图标定
-  python tools/recalibrate_face_threshold.py --pack          # 标定 + 生成入库样本包
+  python tools/recalibrate_face_threshold.py --lab-dir <实验台目录>        # 原图标定
+  python tools/recalibrate_face_threshold.py --lab-dir <实验台目录> --pack # 标定 + 生成入库样本包
 """
 
 from __future__ import annotations
@@ -104,13 +106,20 @@ def main() -> None:
             pass
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--lab-dir", default=r"D:\workspace\picfactory\ab",
-                    help="实验台根目录（含 out/ab/results.jsonl、_calib/impostors、refs）")
+    ap.add_argument("--lab-dir", default=None,
+                    help="实验台根目录（含 out/ab/results.jsonl、_calib/impostors、refs）；"
+                         "本仓库只带压缩样本包，整工具重跑需自备该目录")
     ap.add_argument("--out", default=str(REPO / "docs/ab-evidence/threshold-calibration-production.json"))
     ap.add_argument("--pack", action="store_true", help="同时生成入库样本包（压缩件）")
     ap.add_argument("--pack-dir", default=str(REPO / "docs/ab-evidence/calib-samples"))
     args = ap.parse_args()
 
+    if not args.lab_dir:
+        raise SystemExit(
+            "--lab-dir 必填：指向含 out/ab/results.jsonl、_calib/impostors、refs 的实验台目录。"
+            "入库的 docs/ab-evidence/calib-samples/ 是压缩样本包（目录结构不同），"
+            "只能用于复核 JSON 里 pack 段的分数，不能直接喂给本工具。"
+        )
     lab = Path(args.lab_dir)
     from aesthetics_pipeline.model_choice import _PERSONA_BANNED
     from aesthetics_pipeline.qc.face import FaceGate, similarity
@@ -215,7 +224,7 @@ def main() -> None:
             "note": "压缩件复算（人物合格模型口径）：阈值若与原图版不同，以本包为准重跑本工具取 threshold",
         }
         manifest = {
-            "provenance": "源实验台 D:\\workspace\\picfactory\\ab（开发完成后删除）；本包是唯一可随仓库长期存的刻度样本",
+            "provenance": "由 --lab-dir 指定的外部实验台目录产出（未入库）；本包是唯一可随仓库长期存的刻度样本",
             "method": summary["method"],
             "files": {str(f.relative_to(pack)): _sha256(f) for f in sorted(pack.rglob("*")) if f.is_file()},
         }

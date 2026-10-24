@@ -141,7 +141,7 @@ def test_generate_rejects_bad_input(client):
 
 
 def test_generate_rejects_concurrent_submission(client, monkeypatch):
-    """并发闸（Trae S1）：已有 running 批时第二发提交必须 409。
+    """并发闸：已有 running 批时第二发提交必须 409。
     两条 CLI 并行会互相踩 skip_existing、各持独立成本守卫、抢同一个 SQLite。"""
     monkeypatch.setattr(
         panel, "JOBS", {"busy": {"id": "busy", "status": "running", "steps": [], "log": []}}

@@ -1,7 +1,6 @@
 # 用 pic-factory 生产度量（insightface + BGR + gallery 选脸）复算实验台 50 张。
 #
-# 出处与生命周期：输入来自**旧 DeepSeek 实验台**（D:\workspace\picfactory，
-# 未入库的 85MB 原图）。该仓库按计划删除后此脚本不再可重跑——
+# 出处与生命周期：输入来自外部实验台目录（未入库的 85MB 原图），该目录已不维护——
 # 结论以已入库的 docs/ab-evidence/model-sim-recompute.json 为准，脚本留档方法学。
 # 复跑请传 --lab-dir 指向实验台残留目录。
 import argparse
@@ -12,8 +11,8 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description="复算实验台 50 张一致性（生产度量口径）")
 parser.add_argument(
     "--lab-dir",
-    default=r"D:\workspace\picfactory\ab",
-    help="旧实验台 ab/ 目录（含 refs/persona_lin.png 与 out/ab/results.jsonl）",
+    default=None,
+    help="实验台 ab/ 目录（含 refs/persona_lin.png 与 out/ab/results.jsonl）",
 )
 parser.add_argument(
     "--out",
@@ -23,6 +22,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+if not args.lab_dir:
+    raise SystemExit("--lab-dir 必填：指向实验台 ab/ 目录（含 refs/persona_lin.png 与 "
+                     "out/ab/results.jsonl）；原图未入库，本脚本只留档方法学")
 LAB = Path(args.lab_dir)
 REF = LAB / "refs" / "persona_lin.png"
 LEDGER = LAB / "out" / "ab" / "results.jsonl"

@@ -26,6 +26,3 @@ credentials.json
 .idea/
 .DS_Store
 Thumbs.db
-
-# 会话副产物（智能体自学习笔记，不入任何仓）
-.self-improving/

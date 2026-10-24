@@ -72,7 +72,7 @@ def write_cache(
         "path": path,
         "seconds": round(seconds, 3),
         # 档位随行：http_api 的价目/台账 model_id 都挂在档位上，
-        # 缓存不带它，回放线就会退化成"不知道哪档生成的图"（Trae S4）。
+        # 缓存不带它，回放线就会退化成"不知道哪档生成的图"。
         "model_id": model_id,
     }
     target = cache_path(cache_dir, key, provider)
@@ -83,7 +83,7 @@ def write_cache(
 
 # 回放时的后端优先顺序（确定性优先，不看写入时间）。
 # http_api 必须入表：它是交付主线，此前表里只有 matrix/local——API 真实
-# 产出的缓存默认回放口径下根本不可见（断网兜底对交付线名不副实，Trae S4）。
+# 产出的缓存默认回放口径下根本不可见（断网兜底对交付线名不副实）。
 # 插在 matrix 之后：既有 matrix/local 的相对优先级一字不动，只补漏。
 PROVIDER_ORDER = ("matrix", "http_api", "local")
 

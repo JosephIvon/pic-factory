@@ -4,7 +4,7 @@
 
 1. **生产尺子** insightface buffalo_l —— 直接复用上游生产模块
    `src/aesthetics_pipeline/qc/face.py` 的 embedding()，与一致性闸门口径完全一致；
-2. **校验尺子** YuNet 检测 + w600k_r50.onnx 识别 —— 复用 DeepSeek 实验台
+2. **校验尺子** YuNet 检测 + w600k_r50.onnx 识别 —— 复用外部实验台
    `tools/ab/face.py` 的 FaceMetric（另一套自写度量）。
 
 两者对同一张图 vs 角色锚图（tools/ab/refs/persona_lin.png）各出一个余弦分，
@@ -14,8 +14,8 @@
 裁决背景：生产只留 insightface；YuNet 版降级为校验工具（就是本脚本）。
 若 YuNet 权重在本机取不到，汇总里如实写 "yunet_unavailable"，不造假第二列。
 
-用法（须用装了 insightface/cv2/onnxruntime 的 venv）：
-    D:/Tools/venvs/aesthetics/Scripts/python.exe tools/face_crosscheck.py
+用法（须用装了 insightface/cv2/onnxruntime 的环境）：
+    python tools/face_crosscheck.py
 """
 
 from __future__ import annotations

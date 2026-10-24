@@ -75,7 +75,7 @@ class ReplayProvider:
                     seconds=float(entry.get("seconds", 0.0)),
                     # 回放不改归属：仍是原后端生成的同一张图；
                     # 档位照搬缓存条目——http_api 的图回放后仍按实际档位
-                    # 落账（同键同 provider 是 upsert，不会双计，Trae S4）。
+                    # 落账（同键同 provider 是 upsert，不会双计）。
                     model_id=entry.get("model_id"),
                     source_provider=entry.get("provider") or "matrix",
                 )

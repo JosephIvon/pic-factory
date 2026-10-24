@@ -153,7 +153,7 @@ def test_ark_sync_success(tmp_path) -> None:
     assert out.source_provider == "http_api"
     # 假 JPEG 落盘扩展名必须是 .jpg（不信请求里的 .png）
     assert out.file_name.endswith("__http_api.jpg")
-    # 缓存带档位（Trae S4）：断网回放要能还原"这张是哪个档生成的"
+    # 缓存带档位：断网回放要能还原"这张是哪个档生成的"
     entry = json.loads((tmp_path / "cache" / "http_api" / "arkok.json").read_text(encoding="utf-8"))
     assert entry["model_id"] == "doubao-seedream-4-0"
 
