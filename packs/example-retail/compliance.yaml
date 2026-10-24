@@ -1,0 +1,6 @@
+required_disclaimer: "图片为演示用生成素材，仅用于展示内容生产流程。"
+ai_label:
+  explicit: true
+  implicit_metadata: true
+forbidden_motifs: []
+text_policy: "画面层禁止出现文字；文案由后处理层合成"

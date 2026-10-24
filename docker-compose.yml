@@ -1,0 +1,42 @@
+# 单机交付/演示编排。配置全部走 AP_* 环境变量，密钥从宿主 .env 注入，
+# 绝不写进本文件（也别 commit）。新机器上：cp .env.example .env 填 key → docker compose up。
+services:
+  app:
+    build: .
+    image: pic-factory:latest
+    container_name: pic-factory
+    ports:
+      - "127.0.0.1:8000:8000"   # 只绑本机回环，公网暴露需显式改（演示不做公网）
+    environment:
+      # —— 标准 API 后端（交付路径）。不给 key 则自动退回 matrix 参照/离线 replay ——
+      AP_ARK_KEY: ${AP_ARK_KEY:-}
+      AP_DASHSCOPE_KEY: ${AP_DASHSCOPE_KEY:-}
+      AP_MATRIX_CLI: ${AP_MATRIX_CLI:-}      # 容器内一般没有连接器，留空即不可用
+      # —— 成本闸：未设=不限；设了达 80% 熔断新调用 ——
+      AP_BUDGET_CNY: ${AP_BUDGET_CNY:-}
+      # 面板访问令牌（P0-3）：**不设=仅回环可用**——容器内面板绑 0.0.0.0，
+      # fail-closed 启动闸会拒绝无 token 的非回环绑定（起不来是预期行为，
+      # 逼你二选一：设 token，或把 ports 收回 127.0.0.1 回环）。
+      # 设了之后：/api/* 与 /files/* 必须带 Authorization: Bearer 或 ?token=。
+      AP_PANEL_TOKEN: ${AP_PANEL_TOKEN:-}
+      # 单价一律无默认：未配置就报"未配置单价"，绝不编一个数进成本账
+      # （口径同 test_cost_endpoint_does_not_invent_money）。
+      AP_COST_API: ${AP_COST_API:-}
+      AP_LOCAL_WATT: ${AP_LOCAL_WATT:-}
+      AP_KWH_PRICE: ${AP_KWH_PRICE:-}
+      # —— 面板只读绑定容器内 0.0.0.0，对外由上面的 ports 控制 ——
+    volumes:
+      - ./data:/app/data          # 台账持久化（pipeline.db 在此，别 commit）
+      - ./out:/app/out            # 生成产物
+    restart: unless-stopped
+
+  # 一次性任务示例：docker compose run --rm batch aesthetics generate --provider auto --limit 6
+  batch:
+    build: .
+    image: pic-factory:latest
+    profiles: ["oneshot"]        # 默认不随 up 启动
+    env_file: [.env]
+    volumes:
+      - ./data:/app/data
+      - ./out:/app/out
+    command: ["aesthetics", "generate", "--provider", "auto"]

@@ -1,0 +1,16 @@
+# 医美域包：清单（manifest）
+#
+# 说明：矩阵与画面模板**引用仓库既有文件**（../../data、../../prompts），
+# 而不是复制一份——两份真相一定会漂移。新行业包可以把文件放在包内，见 packs/example-retail。
+name: medical-aesthetics
+display: 医美内容生产
+version: "2026-10-24"
+description: >-
+  城市 × 项目 × 主题 × 渠道 × 角色的医美图文矩阵。
+  强人物一致走图生图、泛化人物走文生图；中文不进画面（由后处理合成）。
+
+matrix: ../../data/tasks.yaml
+scene: ../../prompts/scene.yaml
+copy: copy.yaml
+compliance: compliance.yaml
+assets: assets

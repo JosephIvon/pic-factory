@@ -1,0 +1,102 @@
+{
+  "A": {
+    "provider": "ark-5.0-flash",
+    "label": "Seedream 5.0 Flash",
+    "prompt_id": "p08_generic_price_talk"
+  },
+  "B": {
+    "provider": "qwen-3.0-pro",
+    "label": "Qwen-Image 3.0 Pro",
+    "prompt_id": "p08_generic_price_talk"
+  },
+  "C": {
+    "provider": "ark-5.0-pro",
+    "label": "Seedream 5.0 Pro",
+    "prompt_id": "p06_pico_mirror"
+  },
+  "D": {
+    "provider": "qwen-3.0",
+    "label": "Qwen-Image 3.0",
+    "prompt_id": "p04_photon_headband"
+  },
+  "E": {
+    "provider": "ark-5.0-flash",
+    "label": "Seedream 5.0 Flash",
+    "prompt_id": "p01_waterlight_bed"
+  },
+  "F": {
+    "provider": "ark-5.0-pro",
+    "label": "Seedream 5.0 Pro",
+    "prompt_id": "p05_photon_consult"
+  },
+  "G": {
+    "provider": "ark-5.0-pro",
+    "label": "Seedream 5.0 Pro",
+    "prompt_id": "p03_waterlight_standing"
+  },
+  "H": {
+    "provider": "qwen-3.0-pro",
+    "label": "Qwen-Image 3.0 Pro",
+    "prompt_id": "p04_photon_headband"
+  },
+  "I": {
+    "provider": "ark-5.0-pro",
+    "label": "Seedream 5.0 Pro",
+    "prompt_id": "p04_photon_headband"
+  },
+  "J": {
+    "provider": "qwen-3.0",
+    "label": "Qwen-Image 3.0",
+    "prompt_id": "p09_generic_aftercare"
+  },
+  "K": {
+    "provider": "ark-4.0",
+    "label": "Seedream 4.0",
+    "prompt_id": "p07_pico_seated"
+  },
+  "L": {
+    "provider": "ark-4.0",
+    "label": "Seedream 4.0",
+    "prompt_id": "p03_waterlight_standing"
+  },
+  "M": {
+    "provider": "qwen-3.0",
+    "label": "Qwen-Image 3.0",
+    "prompt_id": "p01_waterlight_bed"
+  },
+  "N": {
+    "provider": "ark-4.0",
+    "label": "Seedream 4.0",
+    "prompt_id": "p08_generic_price_talk"
+  },
+  "O": {
+    "provider": "qwen-3.0-pro",
+    "label": "Qwen-Image 3.0 Pro",
+    "prompt_id": "p10_scene_clinic"
+  },
+  "P": {
+    "provider": "ark-5.0-flash",
+    "label": "Seedream 5.0 Flash",
+    "prompt_id": "p03_waterlight_standing"
+  },
+  "Q": {
+    "provider": "ark-5.0-flash",
+    "label": "Seedream 5.0 Flash",
+    "prompt_id": "p06_pico_mirror"
+  },
+  "R": {
+    "provider": "qwen-3.0-pro",
+    "label": "Qwen-Image 3.0 Pro",
+    "prompt_id": "p07_pico_seated"
+  },
+  "S": {
+    "provider": "ark-4.0",
+    "label": "Seedream 4.0",
+    "prompt_id": "p02_waterlight_closeup"
+  },
+  "T": {
+    "provider": "qwen-3.0",
+    "label": "Qwen-Image 3.0",
+    "prompt_id": "p08_generic_price_talk"
+  }
+}

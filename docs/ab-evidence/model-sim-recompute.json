@@ -1,0 +1,97 @@
+{
+  "method": "pic-factory production metric: insightface buffalo_l, BGR convert, gallery selection (max cos pair)",
+  "reference": "D:\\workspace\\picfactory\\ab\\refs\\persona_lin.png",
+  "missing_files": [],
+  "models": {
+    "ark-4.0": {
+      "n": 10,
+      "sim_mean_all": 0.7648,
+      "sim_mean_clean_excl_p09": 0.7923,
+      "sim_min_all": 0.5442,
+      "per_prompt": {
+        "p01_waterlight_bed": 0.7779,
+        "p02_waterlight_closeup": 0.8338,
+        "p03_waterlight_standing": 0.8667,
+        "p04_photon_headband": 0.6406,
+        "p05_photon_consult": 0.8509,
+        "p06_pico_mirror": 0.7411,
+        "p07_pico_seated": 0.8674,
+        "p08_generic_price_talk": 0.7602,
+        "p09_generic_aftercare": 0.5442,
+        "p10_scene_clinic": null
+      }
+    },
+    "ark-5.0-flash": {
+      "n": 10,
+      "sim_mean_all": 0.7736,
+      "sim_mean_clean_excl_p09": 0.815,
+      "sim_min_all": 0.4425,
+      "per_prompt": {
+        "p01_waterlight_bed": 0.8624,
+        "p02_waterlight_closeup": 0.8327,
+        "p03_waterlight_standing": 0.8063,
+        "p04_photon_headband": 0.8308,
+        "p05_photon_consult": 0.7651,
+        "p06_pico_mirror": 0.8639,
+        "p07_pico_seated": 0.8261,
+        "p08_generic_price_talk": 0.733,
+        "p09_generic_aftercare": 0.4425,
+        "p10_scene_clinic": null
+      }
+    },
+    "ark-5.0-pro": {
+      "n": 10,
+      "sim_mean_all": 0.7016,
+      "sim_mean_clean_excl_p09": 0.751,
+      "sim_min_all": 0.3068,
+      "per_prompt": {
+        "p01_waterlight_bed": 0.5639,
+        "p02_waterlight_closeup": 0.9217,
+        "p03_waterlight_standing": 0.8983,
+        "p04_photon_headband": 0.8304,
+        "p05_photon_consult": 0.7287,
+        "p06_pico_mirror": 0.6497,
+        "p07_pico_seated": 0.9587,
+        "p08_generic_price_talk": 0.4566,
+        "p09_generic_aftercare": 0.3068,
+        "p10_scene_clinic": null
+      }
+    },
+    "qwen-3.0": {
+      "n": 10,
+      "sim_mean_all": 0.7924,
+      "sim_mean_clean_excl_p09": 0.8626,
+      "sim_min_all": 0.2311,
+      "per_prompt": {
+        "p01_waterlight_bed": 0.76,
+        "p02_waterlight_closeup": 0.8258,
+        "p03_waterlight_standing": 0.8423,
+        "p04_photon_headband": 0.8672,
+        "p05_photon_consult": 0.9121,
+        "p06_pico_mirror": 0.8632,
+        "p07_pico_seated": 0.915,
+        "p08_generic_price_talk": 0.9153,
+        "p09_generic_aftercare": 0.2311,
+        "p10_scene_clinic": null
+      }
+    },
+    "qwen-3.0-pro": {
+      "n": 10,
+      "sim_mean_all": 0.9013,
+      "sim_mean_clean_excl_p09": 0.9126,
+      "sim_min_all": 0.8109,
+      "per_prompt": {
+        "p01_waterlight_bed": 0.9086,
+        "p02_waterlight_closeup": 0.8586,
+        "p03_waterlight_standing": 0.9504,
+        "p04_photon_headband": 0.8585,
+        "p05_photon_consult": 0.9193,
+        "p06_pico_mirror": 0.9381,
+        "p07_pico_seated": 0.9343,
+        "p08_generic_price_talk": 0.9327,
+        "p09_generic_aftercare": 0.8109,
+        "p10_scene_clinic": null
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+version: "1"
+
+city_english:
+  上海: Shanghai
+  杭州: Hangzhou
+
+photography: >-
+  clean commercial product photography, soft studio light, neutral background,
+  sharp details, high key
+
+negative: >-
+  illustration, anime, 3d render, cgi, text, lettering, signage, watermark,
+  logo, poster, ui element, distorted product, extra parts, blurry, lowres

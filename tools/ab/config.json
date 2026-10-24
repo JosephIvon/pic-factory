@@ -1,0 +1,60 @@
+{
+  "ref_image": "refs/persona_lin.png",
+  "size_3x4": "1536x2048",
+  "providers": {
+    "ark-4.0": {
+      "kind": "ark",
+      "model": "doubao-seedream-4-0-20260415",
+      "label": "Seedream 4.0",
+      "price_cny": 0.20,
+      "size": "1536x2048",
+      "extras": { "sequential_image_generation": "disabled", "watermark": true }
+    },
+    "ark-4.5": {
+      "kind": "ark",
+      "model": "doubao-seedream-4-5-251128",
+      "label": "Seedream 4.5",
+      "price_cny": 0.25,
+      "size": "1536x2048",
+      "extras": { "watermark": true }
+    },
+    "ark-5.0-flash": {
+      "kind": "ark",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "label": "Seedream 5.0 Flash",
+      "price_cny": 0.10,
+      "size": "1536x2048",
+      "extras": { "watermark": true }
+    },
+    "ark-5.0-pro": {
+      "kind": "ark",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "label": "Seedream 5.0 Pro",
+      "price_cny": 0.30,
+      "size": "1536x2048",
+      "extras": { "watermark": true }
+    },
+    "qwen-3.0": {
+      "kind": "qwen",
+      "model": "qwen-image-3.0",
+      "label": "Qwen-Image 3.0",
+      "price_cny": 0.18,
+      "size": "1536x2048",
+      "extras": { "watermark": true, "prompt_extend": false, "seed": 20261024 }
+    },
+    "qwen-3.0-pro": {
+      "kind": "qwen",
+      "model": "qwen-image-3.0-pro",
+      "label": "Qwen-Image 3.0 Pro",
+      "price_cny": 0.49,
+      "size": "1536x2048",
+      "extras": { "watermark": true, "prompt_extend": false, "seed": 20261024 }
+    }
+  },
+  "endpoints": {
+    "ark": "https://ark.cn-beijing.volces.com/api/v3/images/generations",
+    "wan_i2i": "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis",
+    "wan_t2i": "https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis",
+    "wan_task": "https://dashscope.aliyuncs.com/api/v1/tasks/{task_id}"
+  }
+}

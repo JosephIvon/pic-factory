@@ -1,0 +1,600 @@
+{
+  "task": "P5 两套人脸度量对账（外部锚点）",
+  "generated_at": "2026-10-24T15:07:01",
+  "anchor": "D:\\workspace\\pic-factory\\tools\\ab\\refs\\persona_lin.png",
+  "anchor_note": "tools/ab/refs/persona_lin.png，与上游 evidence/01_t2i_baseline.png md5 相同（18009cc9a87703d7b07e15c10c1dc775）",
+  "metrics": {
+    "insightface": "insightface buffalo_l (src/aesthetics_pipeline/qc/face.py)",
+    "yunet": "YuNet 检测 + w600k_r50.onnx (tools/ab/face.py FaceMetric)"
+  },
+  "images": [
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p01_waterlight_bed",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p01_waterlight_bed.jpg",
+      "insightface_sim": 0.8122,
+      "insightface_no_face": false,
+      "yunet_sim": 0.7333,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p02_waterlight_closeup",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p02_waterlight_closeup.jpg",
+      "insightface_sim": 0.8425,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8034,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p03_waterlight_standing",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p03_waterlight_standing.jpg",
+      "insightface_sim": 0.8665,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8399,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p04_photon_headband",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p04_photon_headband.jpg",
+      "insightface_sim": 0.7018,
+      "insightface_no_face": false,
+      "yunet_sim": 0.6126,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p05_photon_consult",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p05_photon_consult.jpg",
+      "insightface_sim": 0.832,
+      "insightface_no_face": false,
+      "yunet_sim": 0.829,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p06_pico_mirror",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p06_pico_mirror.jpg",
+      "insightface_sim": 0.7787,
+      "insightface_no_face": false,
+      "yunet_sim": 0.7008,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p07_pico_seated",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p07_pico_seated.jpg",
+      "insightface_sim": 0.8678,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8063,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p08_generic_price_talk",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p08_generic_price_talk.jpg",
+      "insightface_sim": 0.7634,
+      "insightface_no_face": false,
+      "yunet_sim": 0.7301,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p09_generic_aftercare",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p09_generic_aftercare.jpg",
+      "insightface_sim": 0.5489,
+      "insightface_no_face": false,
+      "yunet_sim": 0.5028,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-4.0",
+      "model": "doubao-seedream-4-0-20260415",
+      "prompt_id": "p10_scene_clinic",
+      "mode": "t2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-4.0\\p10_scene_clinic.jpg",
+      "insightface_sim": null,
+      "insightface_no_face": true,
+      "yunet_sim": null,
+      "yunet_no_face": true
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p01_waterlight_bed",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p01_waterlight_bed.jpg",
+      "insightface_sim": 0.5716,
+      "insightface_no_face": false,
+      "yunet_sim": 0.5497,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p02_waterlight_closeup",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p02_waterlight_closeup.jpg",
+      "insightface_sim": 0.9338,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8823,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p03_waterlight_standing",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p03_waterlight_standing.jpg",
+      "insightface_sim": 0.8964,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8757,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p04_photon_headband",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p04_photon_headband.jpg",
+      "insightface_sim": 0.8217,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8187,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p05_photon_consult",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p05_photon_consult.jpg",
+      "insightface_sim": 0.7043,
+      "insightface_no_face": false,
+      "yunet_sim": 0.6578,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p06_pico_mirror",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p06_pico_mirror.jpg",
+      "insightface_sim": 0.641,
+      "insightface_no_face": false,
+      "yunet_sim": 0.6226,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p07_pico_seated",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p07_pico_seated.jpg",
+      "insightface_sim": 0.9608,
+      "insightface_no_face": false,
+      "yunet_sim": 0.9085,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p08_generic_price_talk",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p08_generic_price_talk.jpg",
+      "insightface_sim": 0.4682,
+      "insightface_no_face": false,
+      "yunet_sim": 0.4759,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p09_generic_aftercare",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p09_generic_aftercare.jpg",
+      "insightface_sim": 0.2027,
+      "insightface_no_face": false,
+      "yunet_sim": 0.2342,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "model": "doubao-seedream-5-0-pro-260628",
+      "prompt_id": "p10_scene_clinic",
+      "mode": "t2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-pro\\p10_scene_clinic.jpg",
+      "insightface_sim": null,
+      "insightface_no_face": true,
+      "yunet_sim": null,
+      "yunet_no_face": true
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p01_waterlight_bed",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p01_waterlight_bed.jpg",
+      "insightface_sim": 0.8667,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8107,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p02_waterlight_closeup",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p02_waterlight_closeup.jpg",
+      "insightface_sim": 0.8162,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8138,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p03_waterlight_standing",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p03_waterlight_standing.jpg",
+      "insightface_sim": 0.8154,
+      "insightface_no_face": false,
+      "yunet_sim": 0.7955,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p04_photon_headband",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p04_photon_headband.jpg",
+      "insightface_sim": 0.8408,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8304,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p05_photon_consult",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p05_photon_consult.jpg",
+      "insightface_sim": 0.738,
+      "insightface_no_face": false,
+      "yunet_sim": -0.0052,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p06_pico_mirror",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p06_pico_mirror.jpg",
+      "insightface_sim": 0.8732,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8851,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p07_pico_seated",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p07_pico_seated.jpg",
+      "insightface_sim": 0.8217,
+      "insightface_no_face": false,
+      "yunet_sim": 0.7972,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p08_generic_price_talk",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p08_generic_price_talk.jpg",
+      "insightface_sim": 0.7152,
+      "insightface_no_face": false,
+      "yunet_sim": 0.7197,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p09_generic_aftercare",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p09_generic_aftercare.jpg",
+      "insightface_sim": 0.3774,
+      "insightface_no_face": false,
+      "yunet_sim": 0.502,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "model": "doubao-seedream-5-0-flash-260915",
+      "prompt_id": "p10_scene_clinic",
+      "mode": "t2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\ark-5.0-flash\\p10_scene_clinic.jpg",
+      "insightface_sim": null,
+      "insightface_no_face": true,
+      "yunet_sim": null,
+      "yunet_no_face": true
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p01_waterlight_bed",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p01_waterlight_bed.png",
+      "insightface_sim": 0.7694,
+      "insightface_no_face": false,
+      "yunet_sim": 0.747,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p02_waterlight_closeup",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p02_waterlight_closeup.png",
+      "insightface_sim": 0.8287,
+      "insightface_no_face": false,
+      "yunet_sim": 0.77,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p03_waterlight_standing",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p03_waterlight_standing.png",
+      "insightface_sim": 0.8489,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8502,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p04_photon_headband",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p04_photon_headband.png",
+      "insightface_sim": 0.8882,
+      "insightface_no_face": false,
+      "yunet_sim": 0.843,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p05_photon_consult",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p05_photon_consult.png",
+      "insightface_sim": 0.9148,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8941,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p06_pico_mirror",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p06_pico_mirror.png",
+      "insightface_sim": 0.88,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8688,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p07_pico_seated",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p07_pico_seated.png",
+      "insightface_sim": 0.9081,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8756,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p08_generic_price_talk",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p08_generic_price_talk.png",
+      "insightface_sim": 0.9052,
+      "insightface_no_face": false,
+      "yunet_sim": 0.9023,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p09_generic_aftercare",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p09_generic_aftercare.png",
+      "insightface_sim": 0.2157,
+      "insightface_no_face": false,
+      "yunet_sim": 0.2259,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0",
+      "model": "qwen-image-3.0",
+      "prompt_id": "p10_scene_clinic",
+      "mode": "t2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0\\p10_scene_clinic.png",
+      "insightface_sim": null,
+      "insightface_no_face": true,
+      "yunet_sim": null,
+      "yunet_no_face": true
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p01_waterlight_bed",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p01_waterlight_bed.png",
+      "insightface_sim": 0.9183,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8878,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p02_waterlight_closeup",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p02_waterlight_closeup.png",
+      "insightface_sim": 0.8585,
+      "insightface_no_face": false,
+      "yunet_sim": 0.7592,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p03_waterlight_standing",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p03_waterlight_standing.png",
+      "insightface_sim": 0.9561,
+      "insightface_no_face": false,
+      "yunet_sim": 0.9158,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p04_photon_headband",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p04_photon_headband.png",
+      "insightface_sim": 0.8904,
+      "insightface_no_face": false,
+      "yunet_sim": 0.8576,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p05_photon_consult",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p05_photon_consult.png",
+      "insightface_sim": 0.9127,
+      "insightface_no_face": false,
+      "yunet_sim": 0.9185,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p06_pico_mirror",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p06_pico_mirror.png",
+      "insightface_sim": 0.938,
+      "insightface_no_face": false,
+      "yunet_sim": 0.9198,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p07_pico_seated",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p07_pico_seated.png",
+      "insightface_sim": 0.9451,
+      "insightface_no_face": false,
+      "yunet_sim": 0.9193,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p08_generic_price_talk",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p08_generic_price_talk.png",
+      "insightface_sim": 0.9386,
+      "insightface_no_face": false,
+      "yunet_sim": 0.9289,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p09_generic_aftercare",
+      "mode": "i2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p09_generic_aftercare.png",
+      "insightface_sim": 0.8104,
+      "insightface_no_face": false,
+      "yunet_sim": 0.792,
+      "yunet_no_face": false
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "model": "qwen-image-3.0-pro",
+      "prompt_id": "p10_scene_clinic",
+      "mode": "t2i",
+      "path": "D:\\workspace\\picfactory\\ab\\out\\ab\\qwen-3.0-pro\\p10_scene_clinic.png",
+      "insightface_sim": null,
+      "insightface_no_face": true,
+      "yunet_sim": null,
+      "yunet_no_face": true
+    }
+  ],
+  "summary": {
+    "records_total": 50,
+    "records_located": 50,
+    "insightface_scored": 45,
+    "yunet_status": "ok",
+    "yunet_reason": null,
+    "yunet_scored": 45,
+    "both_scored": 45,
+    "insightface_mean": 0.7868,
+    "yunet_mean": 0.7469,
+    "mean_diff": 0.0399,
+    "mean_abs_diff": 0.0487,
+    "max_abs_diff": 0.7432,
+    "pearson_r": 0.8298,
+    "spearman_rho": 0.9569,
+    "same_person_disagreement": {
+      "0.35": {
+        "pairs": 45,
+        "disagree": 1,
+        "disagree_rate": 0.0222
+      },
+      "0.5": {
+        "pairs": 45,
+        "disagree": 2,
+        "disagree_rate": 0.0444
+      },
+      "0.58": {
+        "pairs": 45,
+        "disagree": 1,
+        "disagree_rate": 0.0222
+      }
+    },
+    "null_notes": {
+      "insightface_null": 5,
+      "yunet_null": 5,
+      "说明": "检不到脸=null，按两套均有分样本统计；两套分数不可直接互换阈值"
+    }
+  }
+}

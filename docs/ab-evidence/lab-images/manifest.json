@@ -1,0 +1,528 @@
+{
+  "provenance": "DeepSeek 选型实验台原始产出压缩版（85MB 三选一，2026-10-24 用户选 a：压缩入库）。源：D:\\workspace\\picfactory\u0007b\\out，源仓库删除后本目录即唯一原件级现场。",
+  "method": "PIL 长边1024 JPEG q88 progressive；分数/标定均以原图为准（见 model-sim-recompute.json / threshold-calibration-production.json），本目录供展示与人工复核，不用于再计算",
+  "calibration_anchor_note": "阈值锚样本另有无损语义的 calib-samples/（生产尺 T=0.57 可在其上复现）；本目录是同一批图再加盲测/exp/debug 全量压缩版",
+  "skipped_already_migrated": [
+    "ab/REPORT.md",
+    "ab/blind/result.json",
+    "ab/calibration.json",
+    "ab/results.jsonl",
+    "ab/score.json"
+  ],
+  "files": [
+    {
+      "file": "ab/ark-4.0/p01_waterlight_bed.jpg",
+      "source": "ab/ark-4.0/p01_waterlight_bed.jpg",
+      "source_sha": "7650c580e4df3ba0",
+      "source_bytes": 993344,
+      "out_bytes": 111702,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p02_waterlight_closeup.jpg",
+      "source": "ab/ark-4.0/p02_waterlight_closeup.jpg",
+      "source_sha": "43d279ce7681553c",
+      "source_bytes": 935904,
+      "out_bytes": 104268,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p03_waterlight_standing.jpg",
+      "source": "ab/ark-4.0/p03_waterlight_standing.jpg",
+      "source_sha": "7cf1875b2aa07b38",
+      "source_bytes": 1060789,
+      "out_bytes": 101217,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p04_photon_headband.jpg",
+      "source": "ab/ark-4.0/p04_photon_headband.jpg",
+      "source_sha": "30016732bad0245f",
+      "source_bytes": 920886,
+      "out_bytes": 106328,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p05_photon_consult.jpg",
+      "source": "ab/ark-4.0/p05_photon_consult.jpg",
+      "source_sha": "01e44e3a082c9df1",
+      "source_bytes": 1081505,
+      "out_bytes": 111312,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p06_pico_mirror.jpg",
+      "source": "ab/ark-4.0/p06_pico_mirror.jpg",
+      "source_sha": "8e9251a6fa6f40b9",
+      "source_bytes": 935648,
+      "out_bytes": 98173,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p07_pico_seated.jpg",
+      "source": "ab/ark-4.0/p07_pico_seated.jpg",
+      "source_sha": "548ee27caa7be5e1",
+      "source_bytes": 909938,
+      "out_bytes": 100575,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p08_generic_price_talk.jpg",
+      "source": "ab/ark-4.0/p08_generic_price_talk.jpg",
+      "source_sha": "999d61657324f873",
+      "source_bytes": 1045844,
+      "out_bytes": 100240,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p09_generic_aftercare.jpg",
+      "source": "ab/ark-4.0/p09_generic_aftercare.jpg",
+      "source_sha": "a1949e1fb9596acb",
+      "source_bytes": 949040,
+      "out_bytes": 108404,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-4.0/p10_scene_clinic.jpg",
+      "source": "ab/ark-4.0/p10_scene_clinic.jpg",
+      "source_sha": "48b63a3eb8b77e51",
+      "source_bytes": 750002,
+      "out_bytes": 88414,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p01_waterlight_bed.jpg",
+      "source": "ab/ark-5.0-flash/p01_waterlight_bed.jpg",
+      "source_sha": "e63d8173a8d594b7",
+      "source_bytes": 314842,
+      "out_bytes": 106692,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p02_waterlight_closeup.jpg",
+      "source": "ab/ark-5.0-flash/p02_waterlight_closeup.jpg",
+      "source_sha": "f46f66326a2c17d4",
+      "source_bytes": 313670,
+      "out_bytes": 103146,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p03_waterlight_standing.jpg",
+      "source": "ab/ark-5.0-flash/p03_waterlight_standing.jpg",
+      "source_sha": "19e7dee738556b13",
+      "source_bytes": 352439,
+      "out_bytes": 117105,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p04_photon_headband.jpg",
+      "source": "ab/ark-5.0-flash/p04_photon_headband.jpg",
+      "source_sha": "d305158ed79b518c",
+      "source_bytes": 295001,
+      "out_bytes": 102089,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p05_photon_consult.jpg",
+      "source": "ab/ark-5.0-flash/p05_photon_consult.jpg",
+      "source_sha": "e04408074450371f",
+      "source_bytes": 277513,
+      "out_bytes": 96156,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p06_pico_mirror.jpg",
+      "source": "ab/ark-5.0-flash/p06_pico_mirror.jpg",
+      "source_sha": "a373e76fbf616280",
+      "source_bytes": 312586,
+      "out_bytes": 107288,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p07_pico_seated.jpg",
+      "source": "ab/ark-5.0-flash/p07_pico_seated.jpg",
+      "source_sha": "4ba095540495ea2c",
+      "source_bytes": 307415,
+      "out_bytes": 105592,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p08_generic_price_talk.jpg",
+      "source": "ab/ark-5.0-flash/p08_generic_price_talk.jpg",
+      "source_sha": "980d105e995044a1",
+      "source_bytes": 289956,
+      "out_bytes": 100251,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p09_generic_aftercare.jpg",
+      "source": "ab/ark-5.0-flash/p09_generic_aftercare.jpg",
+      "source_sha": "a074196a0f14f2b0",
+      "source_bytes": 319981,
+      "out_bytes": 109788,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-flash/p10_scene_clinic.jpg",
+      "source": "ab/ark-5.0-flash/p10_scene_clinic.jpg",
+      "source_sha": "b07dbdb743f60e85",
+      "source_bytes": 262467,
+      "out_bytes": 90712,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p01_waterlight_bed.jpg",
+      "source": "ab/ark-5.0-pro/p01_waterlight_bed.jpg",
+      "source_sha": "80b2d5045fa608e9",
+      "source_bytes": 249523,
+      "out_bytes": 85792,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p02_waterlight_closeup.jpg",
+      "source": "ab/ark-5.0-pro/p02_waterlight_closeup.jpg",
+      "source_sha": "9fa25362edb83713",
+      "source_bytes": 284100,
+      "out_bytes": 97221,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p03_waterlight_standing.jpg",
+      "source": "ab/ark-5.0-pro/p03_waterlight_standing.jpg",
+      "source_sha": "9c9ca2ff7c3b6267",
+      "source_bytes": 279194,
+      "out_bytes": 95878,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p04_photon_headband.jpg",
+      "source": "ab/ark-5.0-pro/p04_photon_headband.jpg",
+      "source_sha": "f9a741db907b9ff1",
+      "source_bytes": 311017,
+      "out_bytes": 107195,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p05_photon_consult.jpg",
+      "source": "ab/ark-5.0-pro/p05_photon_consult.jpg",
+      "source_sha": "1db3fd972690967b",
+      "source_bytes": 278159,
+      "out_bytes": 98126,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p06_pico_mirror.jpg",
+      "source": "ab/ark-5.0-pro/p06_pico_mirror.jpg",
+      "source_sha": "390b2b91dbdbedc9",
+      "source_bytes": 303953,
+      "out_bytes": 101206,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p07_pico_seated.jpg",
+      "source": "ab/ark-5.0-pro/p07_pico_seated.jpg",
+      "source_sha": "470629f415a60ed8",
+      "source_bytes": 290378,
+      "out_bytes": 101015,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p08_generic_price_talk.jpg",
+      "source": "ab/ark-5.0-pro/p08_generic_price_talk.jpg",
+      "source_sha": "352d7a3a9a05d37a",
+      "source_bytes": 276077,
+      "out_bytes": 97528,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p09_generic_aftercare.jpg",
+      "source": "ab/ark-5.0-pro/p09_generic_aftercare.jpg",
+      "source_sha": "580a0fd1a6ef46ff",
+      "source_bytes": 294202,
+      "out_bytes": 103838,
+      "note": ""
+    },
+    {
+      "file": "ab/ark-5.0-pro/p10_scene_clinic.jpg",
+      "source": "ab/ark-5.0-pro/p10_scene_clinic.jpg",
+      "source_sha": "b76094beb465ae38",
+      "source_bytes": 242752,
+      "out_bytes": 85121,
+      "note": ""
+    },
+    {
+      "file": "ab/blind/sheet.jpg",
+      "source": "ab/blind/sheet.png",
+      "source_sha": "e158ec8a363314e3",
+      "source_bytes": 2465619,
+      "out_bytes": 176979,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/exp/E1_ark4_1ref.jpg",
+      "source": "ab/exp/E1_ark4_1ref.jpg",
+      "source_sha": "81ae846e79ab14d7",
+      "source_bytes": 1132430,
+      "out_bytes": 117015,
+      "note": ""
+    },
+    {
+      "file": "ab/exp/E1_ark4_5ref.jpg",
+      "source": "ab/exp/E1_ark4_5ref.jpg",
+      "source_sha": "199a509c3f2254f6",
+      "source_bytes": 891856,
+      "out_bytes": 100864,
+      "note": ""
+    },
+    {
+      "file": "ab/exp/E1_qwen1ref.jpg",
+      "source": "ab/exp/E1_qwen1ref.png",
+      "source_sha": "fbcb75b3620e1a6f",
+      "source_bytes": 2801779,
+      "out_bytes": 76438,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/exp/E1_qwen3ref.jpg",
+      "source": "ab/exp/E1_qwen3ref.png",
+      "source_sha": "4ade1ba275ec070d",
+      "source_bytes": 2834345,
+      "out_bytes": 87694,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/exp/E2_arr_p01.jpg",
+      "source": "ab/exp/E2_arr_p01.jpg",
+      "source_sha": "a7fb5bc376fc5ba4",
+      "source_bytes": 293634,
+      "out_bytes": 101618,
+      "note": ""
+    },
+    {
+      "file": "ab/exp/E2_arr_p05.jpg",
+      "source": "ab/exp/E2_arr_p05.jpg",
+      "source_sha": "33705d3654c8c7e6",
+      "source_bytes": 256329,
+      "out_bytes": 88790,
+      "note": ""
+    },
+    {
+      "file": "ab/exp/E2_str_p01.jpg",
+      "source": "ab/exp/E2_str_p01.jpg",
+      "source_sha": "e00b69b02d2e5e05",
+      "source_bytes": 297524,
+      "out_bytes": 100903,
+      "note": ""
+    },
+    {
+      "file": "ab/exp/E2_str_p05.jpg",
+      "source": "ab/exp/E2_str_p05.jpg",
+      "source_sha": "2097513e2ef37da4",
+      "source_bytes": 281828,
+      "out_bytes": 97392,
+      "note": ""
+    },
+    {
+      "file": "ab/qwen-3.0/p01_waterlight_bed.jpg",
+      "source": "ab/qwen-3.0/p01_waterlight_bed.png",
+      "source_sha": "d9a6e6ee782a3ae3",
+      "source_bytes": 3115688,
+      "out_bytes": 90618,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p02_waterlight_closeup.jpg",
+      "source": "ab/qwen-3.0/p02_waterlight_closeup.png",
+      "source_sha": "49c5da660c42dd72",
+      "source_bytes": 3192943,
+      "out_bytes": 96913,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p03_waterlight_standing.jpg",
+      "source": "ab/qwen-3.0/p03_waterlight_standing.png",
+      "source_sha": "6e29687d1e9898bb",
+      "source_bytes": 3425109,
+      "out_bytes": 91721,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p04_photon_headband.jpg",
+      "source": "ab/qwen-3.0/p04_photon_headband.png",
+      "source_sha": "4494e0e511dd5916",
+      "source_bytes": 3024390,
+      "out_bytes": 88911,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p05_photon_consult.jpg",
+      "source": "ab/qwen-3.0/p05_photon_consult.png",
+      "source_sha": "1d53f3722a4c98cb",
+      "source_bytes": 2875832,
+      "out_bytes": 86527,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p06_pico_mirror.jpg",
+      "source": "ab/qwen-3.0/p06_pico_mirror.png",
+      "source_sha": "640d0e8f73408ff7",
+      "source_bytes": 2963282,
+      "out_bytes": 87021,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p07_pico_seated.jpg",
+      "source": "ab/qwen-3.0/p07_pico_seated.png",
+      "source_sha": "fd33369d36529030",
+      "source_bytes": 2945320,
+      "out_bytes": 88769,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p08_generic_price_talk.jpg",
+      "source": "ab/qwen-3.0/p08_generic_price_talk.png",
+      "source_sha": "78cfa477f43cfc0a",
+      "source_bytes": 2846438,
+      "out_bytes": 86805,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p09_generic_aftercare.jpg",
+      "source": "ab/qwen-3.0/p09_generic_aftercare.png",
+      "source_sha": "2880df1cdd1b08a8",
+      "source_bytes": 3083787,
+      "out_bytes": 94565,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0/p10_scene_clinic.jpg",
+      "source": "ab/qwen-3.0/p10_scene_clinic.png",
+      "source_sha": "9142de943e2a6ba1",
+      "source_bytes": 2785378,
+      "out_bytes": 72852,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p01_waterlight_bed.jpg",
+      "source": "ab/qwen-3.0-pro/p01_waterlight_bed.png",
+      "source_sha": "1c9dae7abee72534",
+      "source_bytes": 3128411,
+      "out_bytes": 94168,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p02_waterlight_closeup.jpg",
+      "source": "ab/qwen-3.0-pro/p02_waterlight_closeup.png",
+      "source_sha": "795f411eb92ca926",
+      "source_bytes": 3251281,
+      "out_bytes": 101635,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p03_waterlight_standing.jpg",
+      "source": "ab/qwen-3.0-pro/p03_waterlight_standing.png",
+      "source_sha": "1d5caa65a1086fd4",
+      "source_bytes": 3381893,
+      "out_bytes": 98836,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p04_photon_headband.jpg",
+      "source": "ab/qwen-3.0-pro/p04_photon_headband.png",
+      "source_sha": "9fe1abf6897c6243",
+      "source_bytes": 3091358,
+      "out_bytes": 93069,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p05_photon_consult.jpg",
+      "source": "ab/qwen-3.0-pro/p05_photon_consult.png",
+      "source_sha": "29c2ddb4f7d568bf",
+      "source_bytes": 2989983,
+      "out_bytes": 92385,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p06_pico_mirror.jpg",
+      "source": "ab/qwen-3.0-pro/p06_pico_mirror.png",
+      "source_sha": "a743fe80fef47091",
+      "source_bytes": 3092962,
+      "out_bytes": 91695,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p07_pico_seated.jpg",
+      "source": "ab/qwen-3.0-pro/p07_pico_seated.png",
+      "source_sha": "fce99292b92f07a5",
+      "source_bytes": 3042476,
+      "out_bytes": 92266,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p08_generic_price_talk.jpg",
+      "source": "ab/qwen-3.0-pro/p08_generic_price_talk.png",
+      "source_sha": "39c42d37d2450d58",
+      "source_bytes": 2910456,
+      "out_bytes": 90919,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p09_generic_aftercare.jpg",
+      "source": "ab/qwen-3.0-pro/p09_generic_aftercare.png",
+      "source_sha": "d8d5a2caf3ab3945",
+      "source_bytes": 3117530,
+      "out_bytes": 94370,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "ab/qwen-3.0-pro/p10_scene_clinic.jpg",
+      "source": "ab/qwen-3.0-pro/p10_scene_clinic.png",
+      "source_sha": "849e034c249e3cac",
+      "source_bytes": 2933784,
+      "out_bytes": 78430,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "debug/01_aligned.jpg",
+      "source": "debug/01_aligned.png",
+      "source_sha": "0a3b710b1dddfbbf",
+      "source_bytes": 23935,
+      "out_bytes": 3621,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "debug/02_aligned.jpg",
+      "source": "debug/02_aligned.png",
+      "source_sha": "d2375e779421a42b",
+      "source_bytes": 17633,
+      "out_bytes": 2399,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "debug/03_aligned.jpg",
+      "source": "debug/03_aligned.png",
+      "source_sha": "4f1786d5fd307c71",
+      "source_bytes": 25661,
+      "out_bytes": 4127,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "smoke_qwen-3.0.jpg",
+      "source": "smoke_qwen-3.0.png",
+      "source_sha": "210ba8042db8c4a3",
+      "source_bytes": 2769136,
+      "out_bytes": 88010,
+      "note": "png->jpg 换扩展名（内容压缩，非原字节）"
+    },
+    {
+      "file": "meta/ab/blind/key.json",
+      "source": "ab/blind/key.json",
+      "source_sha": "eff5b2b82bd86d3e"
+    },
+    {
+      "file": "meta/ab/exp/results.json",
+      "source": "ab/exp/results.json",
+      "source_sha": "e7f71285e90e0f88"
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+[
+  {
+    "exp": "E1",
+    "tag": "E1_ark4_1ref",
+    "model": "doubao-seedream-4-0-20260415",
+    "refs": 1,
+    "prompt": "p01",
+    "sim": 0.508,
+    "sec": 9.3,
+    "err": null
+  },
+  {
+    "exp": "E1",
+    "tag": "E1_ark4_5ref",
+    "model": "doubao-seedream-4-0-20260415",
+    "refs": 5,
+    "prompt": "p01",
+    "sim": 0.683,
+    "sec": 30.7,
+    "err": null
+  },
+  {
+    "exp": "E1",
+    "tag": "E1_qwen1ref",
+    "model": "qwen-image-3.0",
+    "refs": 1,
+    "prompt": "p01",
+    "sim": 0.824,
+    "sec": 55.9,
+    "err": null
+  },
+  {
+    "exp": "E1",
+    "tag": "E1_qwen3ref",
+    "model": "qwen-image-3.0",
+    "refs": 3,
+    "prompt": "p01",
+    "sim": 0.607,
+    "sec": 75.5,
+    "err": null
+  },
+  {
+    "exp": "E1",
+    "tag": "E1_ark4_1ref",
+    "model": "doubao-seedream-4-0-20260415",
+    "refs": 1,
+    "prompt": "p05",
+    "sim": 0.818,
+    "sec": 16.4,
+    "err": null
+  },
+  {
+    "exp": "E1",
+    "tag": "E1_ark4_5ref",
+    "model": "doubao-seedream-4-0-20260415",
+    "refs": 5,
+    "prompt": "p05",
+    "sim": 0.791,
+    "sec": 30.9,
+    "err": null
+  },
+  {
+    "exp": "E1",
+    "tag": "E1_qwen1ref",
+    "model": "qwen-image-3.0",
+    "refs": 1,
+    "prompt": "p05",
+    "sim": 0.897,
+    "sec": 66.9,
+    "err": null
+  },
+  {
+    "exp": "E1",
+    "tag": "E1_qwen3ref",
+    "model": "qwen-image-3.0",
+    "refs": 3,
+    "prompt": "p05",
+    "sim": 0.854,
+    "sec": 81.0,
+    "err": null
+  },
+  {
+    "exp": "E2",
+    "tag": "E2_str",
+    "model": "seedream-5.0-pro",
+    "refs": 1,
+    "prompt": "p01",
+    "sim": 0.752,
+    "sec": 92.1,
+    "err": null
+  },
+  {
+    "exp": "E2",
+    "tag": "E2_arr",
+    "model": "seedream-5.0-pro",
+    "refs": 1,
+    "prompt": "p01",
+    "sim": 0.885,
+    "sec": 103.5,
+    "err": null
+  },
+  {
+    "exp": "E2",
+    "tag": "E2_seq",
+    "model": "seedream-5.0-pro",
+    "refs": 1,
+    "prompt": "p01",
+    "sim": null,
+    "sec": 0.3,
+    "err": "HTTP 400: {\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `sequential_image_generation` specified in the request are not valid: the parameter `sequential_ima"
+  },
+  {
+    "exp": "E2",
+    "tag": "E2_str",
+    "model": "seedream-5.0-pro",
+    "refs": 1,
+    "prompt": "p05",
+    "sim": 0.85,
+    "sec": 108.6,
+    "err": null
+  },
+  {
+    "exp": "E2",
+    "tag": "E2_arr",
+    "model": "seedream-5.0-pro",
+    "refs": 1,
+    "prompt": "p05",
+    "sim": 0.819,
+    "sec": 106.4,
+    "err": null
+  },
+  {
+    "exp": "E2",
+    "tag": "E2_seq",
+    "model": "seedream-5.0-pro",
+    "refs": 1,
+    "prompt": "p05",
+    "sim": null,
+    "sec": 0.3,
+    "err": "HTTP 400: {\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `sequential_image_generation` specified in the request are not valid: the parameter `sequential_ima"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "picked": ["C", "J", "O", "Q"],
+  "overall_rate": 0.2,
+  "by_model": {
+    "Seedream 4.0": { "hit": 0, "total": 4 },
+    "Seedream 5.0 Pro": { "hit": 1, "total": 4 },
+    "Seedream 5.0 Flash": { "hit": 1, "total": 4 },
+    "Qwen-Image 3.0": { "hit": 1, "total": 4 },
+    "Qwen-Image 3.0 Pro": { "hit": 1, "total": 4 }
+  },
+  "notes": [
+    "被试（1 人，业务视角）标为 AI 的 4 张：C=5.0Pro 的镜面场景、Q=5.0Flash 的同题镜面、J=Qwen3.0 的贴面膜、O=Qwen3Pro 的空诊室。",
+    "误判集中在「镜面反射」「面部遮挡」「无人空间」三类结构性难点，没有一张是因为人脸的塑料感被认出。",
+    "1 人 20 张属初筛，结论是方向性的；扩到 5-8 人才能给置信区间。"
+  ]
+}

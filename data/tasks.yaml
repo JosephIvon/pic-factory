@@ -1,0 +1,70 @@
+# 任务矩阵：城市 × 项目 × 主题 × 渠道 × 角色
+#
+# 重要约定（来自实测教训）：
+#   1. 画面 prompt 一律英文。中文主题词进画面会被模型直接画成招牌/黑板并产生乱码。
+#   2. 主题只在这里以「视觉属性」的形式出现（theme.visual），它的原始中文文本
+#      只允许进入文案层（theme.copy_angle），由 copy.py 使用。
+#   3. 项目/主题的 visual 描述的是"画面里有什么"，不描述"文字内容"。
+
+version: "2026-10-24"
+
+cities:
+  - 武汉
+  - 成都
+  - 深圳
+
+projects:
+  水光针补水:
+    visual: "a female client in her 30s resting on a treatment bed in a bright modern aesthetic clinic, damp glowing fresh skin"
+    # 需要"同一个人"跨城市/跨主题复用 -> 走图生图（参考图锁脸）
+    use_character: true
+  黄金射频微针:
+    visual: "a female client in her 30s in a treatment room with a radiofrequency microneedling device on a side table, mildly flushed cheeks"
+    # 机构/价格类内容，人物是泛化的 -> 走文生图
+    use_character: false
+  光子嫩肤:
+    visual: "a female client in her 30s wearing a protective headband, seated in front of a light treatment device"
+    use_character: false
+  热玛吉:
+    visual: "a female client in her 30s lying on a treatment bed with a sliming applicator resting near her jaw, relaxed expression"
+    # 同一人不同时期的对比内容 -> 走图生图
+    use_character: true
+  皮秒祛斑:
+    visual: "a female client in her 30s with clear even skin tone, standing in front of a mirror in a bright clinic"
+    use_character: true
+    # 不允许出网（真实素颜对比素材只在院内出）→ 路由规则 R1 压过"强一致优先"，
+    # 交给本地栈；一致性由后置换脸兜底（实测两条路线换脸后都收敛到 0.68~0.85）
+    no_cloud: true
+
+themes:
+  术后第7天真实反馈:
+    visual: "calm satisfied expression, healthy even skin, relaxed shoulders"
+    copy_angle: "术后第 7 天的真实状态记录"
+  价格透明拆解:
+    visual: "calm neutral expression, natural relaxed posture, soft even daylight"
+    copy_angle: "项目价格构成说明"
+    # 成品要带中文价格排版 → 路由规则 R2：走质量更高的一侧。
+    # 中文本身由后处理合成，**绝不进画面 prompt**（实测中文会被画成乱码招牌）
+    needs_text_overlay: true
+  医生口碑门诊实拍:
+    visual: "warm attentive expression mid conversation, natural eye contact"
+    copy_angle: "门诊沟通片段记录"
+  45岁松弛肌真实对比:
+    visual: "mature relaxed expression, natural skin texture with visible fine lines, no heavy makeup"
+    copy_angle: "同一人物不同状态的记录"
+  真实素颜无滤镜:
+    visual: "bare face with no makeup, natural skin texture with visible pores, no retouching"
+    copy_angle: "素颜状态记录"
+
+channels:
+  xiaohongshu:
+    aspect_ratio: "3:4"
+    resolution: "2K"
+  wechat:
+    aspect_ratio: "16:9"
+    resolution: "2K"
+
+characters:
+  lin:
+    identity_block: "a 28 year old Chinese woman with shoulder length straight black hair parted in the middle, oval face, soft almond shaped eyes, a small mole on her left cheek, natural thin eyebrows"
+    ref: evidence/01_t2i_baseline.png

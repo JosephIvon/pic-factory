@@ -1,0 +1,31 @@
+version: "1"
+
+cities:
+  - 上海
+  - 杭州
+
+projects:
+  新品上市:
+    visual: "a modern retail shelf displaying a new product line, soft studio lighting, clean background"
+    use_character: false
+  门店活动:
+    visual: "a bright store entrance with a promotional display stand, natural daylight, wide shot"
+    use_character: false
+
+themes:
+  门店实拍:
+    visual: "bright store interior, natural daylight, clean composition"
+    copy_angle: "门店实拍记录"
+  新品细节:
+    visual: "close-up product detail, soft shadow, minimal props"
+    copy_angle: "新品细节展示"
+
+channels:
+  wechat:
+    aspect_ratio: "16:9"
+    resolution: "2K"
+  xiaohongshu:
+    aspect_ratio: "3:4"
+    resolution: "2K"
+
+characters: {}

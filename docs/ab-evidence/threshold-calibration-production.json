@@ -1,0 +1,600 @@
+{
+  "method": "insightface buffalo_l (BGR) gallery-max-cos，正样本=lab results.jsonl 最新 i2i，负样本=同域难负 impostors",
+  "metric": "production (qc/face.py similarity) —— 与 lab T=0.46 不同尺，不可互相引用",
+  "rule": "T = (同域负最高 + 人物合格模型正样本最低(剔遮挡)) / 2；全人群视图另报",
+  "occluded_pid": "p09_generic_aftercare",
+  "persona_banned_providers": [
+    "ark-5.0-pro"
+  ],
+  "positive_n": 45,
+  "positive_n_eligible": 32,
+  "positive_mean": 0.787,
+  "positive_min_clean_eligible": 0.6406,
+  "positive_min_clean_full": 0.4566,
+  "positive_min_all": 0.2311,
+  "indomain_negative_n": 7,
+  "indomain_negative_max": 0.4918,
+  "threshold": 0.57,
+  "tpr_at_threshold": 1.0,
+  "far_indomain": 0.0,
+  "margin": 0.1488,
+  "full_population_overlap": {
+    "positive_min_clean": 0.4566,
+    "note": "全人群间隙为负（-0.035）：低于难负最高 0.4918 的两张正样本全部来自 ark-5.0-pro（0.4566/0.5639）——即档位表已禁入人物线的模型。闸与档位表互证：禁令的根据不能反过来稀释闸线。150 同域负样本留待开发完成后补。"
+  },
+  "caveat": "同域负样本 n=7，FAR 点估计无统计意义；FAR≤2% 需 ≥150 负样本（用户已裁决：开发完成后处理）。跨域（Olivetti）只作 sanity，不进阈值推导——跨域标定给假线。",
+  "positives": [
+    {
+      "provider": "ark-4.0",
+      "pid": "p01_waterlight_bed",
+      "sim": 0.7779,
+      "sha256": "7650c580e4df3ba0"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p02_waterlight_closeup",
+      "sim": 0.8338,
+      "sha256": "43d279ce7681553c"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p03_waterlight_standing",
+      "sim": 0.8667,
+      "sha256": "7cf1875b2aa07b38"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p04_photon_headband",
+      "sim": 0.6406,
+      "sha256": "30016732bad0245f"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p05_photon_consult",
+      "sim": 0.8509,
+      "sha256": "01e44e3a082c9df1"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p06_pico_mirror",
+      "sim": 0.7411,
+      "sha256": "8e9251a6fa6f40b9"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p07_pico_seated",
+      "sim": 0.8674,
+      "sha256": "548ee27caa7be5e1"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p08_generic_price_talk",
+      "sim": 0.7602,
+      "sha256": "999d61657324f873"
+    },
+    {
+      "provider": "ark-4.0",
+      "pid": "p09_generic_aftercare",
+      "sim": 0.5442,
+      "sha256": "a1949e1fb9596acb"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p01_waterlight_bed",
+      "sim": 0.8624,
+      "sha256": "e63d8173a8d594b7"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p02_waterlight_closeup",
+      "sim": 0.8327,
+      "sha256": "f46f66326a2c17d4"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p03_waterlight_standing",
+      "sim": 0.8063,
+      "sha256": "19e7dee738556b13"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p04_photon_headband",
+      "sim": 0.8308,
+      "sha256": "d305158ed79b518c"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p05_photon_consult",
+      "sim": 0.7651,
+      "sha256": "e04408074450371f"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p06_pico_mirror",
+      "sim": 0.8639,
+      "sha256": "a373e76fbf616280"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p07_pico_seated",
+      "sim": 0.8261,
+      "sha256": "4ba095540495ea2c"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p08_generic_price_talk",
+      "sim": 0.733,
+      "sha256": "980d105e995044a1"
+    },
+    {
+      "provider": "ark-5.0-flash",
+      "pid": "p09_generic_aftercare",
+      "sim": 0.4425,
+      "sha256": "a074196a0f14f2b0"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p01_waterlight_bed",
+      "sim": 0.5639,
+      "sha256": "80b2d5045fa608e9"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p02_waterlight_closeup",
+      "sim": 0.9217,
+      "sha256": "9fa25362edb83713"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p03_waterlight_standing",
+      "sim": 0.8983,
+      "sha256": "9c9ca2ff7c3b6267"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p04_photon_headband",
+      "sim": 0.8304,
+      "sha256": "f9a741db907b9ff1"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p05_photon_consult",
+      "sim": 0.7287,
+      "sha256": "1db3fd972690967b"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p06_pico_mirror",
+      "sim": 0.6497,
+      "sha256": "390b2b91dbdbedc9"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p07_pico_seated",
+      "sim": 0.9587,
+      "sha256": "470629f415a60ed8"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p08_generic_price_talk",
+      "sim": 0.4566,
+      "sha256": "352d7a3a9a05d37a"
+    },
+    {
+      "provider": "ark-5.0-pro",
+      "pid": "p09_generic_aftercare",
+      "sim": 0.3068,
+      "sha256": "580a0fd1a6ef46ff"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p01_waterlight_bed",
+      "sim": 0.76,
+      "sha256": "d9a6e6ee782a3ae3"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p02_waterlight_closeup",
+      "sim": 0.8258,
+      "sha256": "49c5da660c42dd72"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p03_waterlight_standing",
+      "sim": 0.8423,
+      "sha256": "6e29687d1e9898bb"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p04_photon_headband",
+      "sim": 0.8672,
+      "sha256": "4494e0e511dd5916"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p05_photon_consult",
+      "sim": 0.9121,
+      "sha256": "1d53f3722a4c98cb"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p06_pico_mirror",
+      "sim": 0.8632,
+      "sha256": "640d0e8f73408ff7"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p07_pico_seated",
+      "sim": 0.915,
+      "sha256": "fd33369d36529030"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p08_generic_price_talk",
+      "sim": 0.9153,
+      "sha256": "78cfa477f43cfc0a"
+    },
+    {
+      "provider": "qwen-3.0",
+      "pid": "p09_generic_aftercare",
+      "sim": 0.2311,
+      "sha256": "2880df1cdd1b08a8"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p01_waterlight_bed",
+      "sim": 0.9086,
+      "sha256": "1c9dae7abee72534"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p02_waterlight_closeup",
+      "sim": 0.8586,
+      "sha256": "795f411eb92ca926"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p03_waterlight_standing",
+      "sim": 0.9504,
+      "sha256": "1d5caa65a1086fd4"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p04_photon_headband",
+      "sim": 0.8585,
+      "sha256": "9fe1abf6897c6243"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p05_photon_consult",
+      "sim": 0.9193,
+      "sha256": "29c2ddb4f7d568bf"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p06_pico_mirror",
+      "sim": 0.9381,
+      "sha256": "a743fe80fef47091"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p07_pico_seated",
+      "sim": 0.9343,
+      "sha256": "fce99292b92f07a5"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p08_generic_price_talk",
+      "sim": 0.9327,
+      "sha256": "39c42d37d2450d58"
+    },
+    {
+      "provider": "qwen-3.0-pro",
+      "pid": "p09_generic_aftercare",
+      "sim": 0.8109,
+      "sha256": "d8d5a2caf3ab3945"
+    }
+  ],
+  "impostors": [
+    {
+      "name": "03_t2i_same_description_differs.jpg",
+      "sim": 0.3476,
+      "sha256": "4732d18bf7fdd50a"
+    },
+    {
+      "name": "batch_01_wuhan_shuiguang.jpg",
+      "sim": 0.437,
+      "sha256": "c3918819066dea97"
+    },
+    {
+      "name": "batch_02_wuhan_rf_microneedle.jpg",
+      "sim": 0.3527,
+      "sha256": "879c8e33490ade79"
+    },
+    {
+      "name": "batch_03_chengdu_photon.jpg",
+      "sim": 0.4446,
+      "sha256": "0802df60ee463afc"
+    },
+    {
+      "name": "batch_04_chengdu_thermage.jpg",
+      "sim": 0.3137,
+      "sha256": "9404c13c817fbf30"
+    },
+    {
+      "name": "batch_05_shenzhen_shuiguang.jpg",
+      "sim": 0.4857,
+      "sha256": "fc6bc31536ceed6a"
+    },
+    {
+      "name": "batch_06_shenzhen_picosecond.jpg",
+      "sim": 0.4918,
+      "sha256": "29ab908ac465f310"
+    }
+  ],
+  "pack": {
+    "long_edge": 896,
+    "jpeg_q": 90,
+    "positive_min_clean_eligible": 0.6552,
+    "indomain_negative_max": 0.4802,
+    "threshold_midpoint": 0.57,
+    "positives": [
+      {
+        "provider": "ark-4.0",
+        "pid": "p01_waterlight_bed",
+        "sim": 0.8014
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p02_waterlight_closeup",
+        "sim": 0.8248
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p03_waterlight_standing",
+        "sim": 0.8831
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p04_photon_headband",
+        "sim": 0.6552
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p05_photon_consult",
+        "sim": 0.8579
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p06_pico_mirror",
+        "sim": 0.7308
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p07_pico_seated",
+        "sim": 0.885
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p08_generic_price_talk",
+        "sim": 0.7426
+      },
+      {
+        "provider": "ark-4.0",
+        "pid": "p09_generic_aftercare",
+        "sim": 0.5538
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p01_waterlight_bed",
+        "sim": 0.8579
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p02_waterlight_closeup",
+        "sim": 0.8442
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p03_waterlight_standing",
+        "sim": 0.8213
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p04_photon_headband",
+        "sim": 0.8455
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p05_photon_consult",
+        "sim": 0.7755
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p06_pico_mirror",
+        "sim": 0.8948
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p07_pico_seated",
+        "sim": 0.8416
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p08_generic_price_talk",
+        "sim": 0.7259
+      },
+      {
+        "provider": "ark-5.0-flash",
+        "pid": "p09_generic_aftercare",
+        "sim": 0.419
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p01_waterlight_bed",
+        "sim": 0.5961
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p02_waterlight_closeup",
+        "sim": 0.937
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p03_waterlight_standing",
+        "sim": 0.9115
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p04_photon_headband",
+        "sim": 0.8331
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p05_photon_consult",
+        "sim": 0.719
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p06_pico_mirror",
+        "sim": 0.6654
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p07_pico_seated",
+        "sim": 0.9618
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p08_generic_price_talk",
+        "sim": 0.4477
+      },
+      {
+        "provider": "ark-5.0-pro",
+        "pid": "p09_generic_aftercare",
+        "sim": 0.327
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p01_waterlight_bed",
+        "sim": 0.9379
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p02_waterlight_closeup",
+        "sim": 0.8874
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p03_waterlight_standing",
+        "sim": 0.9581
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p04_photon_headband",
+        "sim": 0.8759
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p05_photon_consult",
+        "sim": 0.9353
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p06_pico_mirror",
+        "sim": 0.9513
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p07_pico_seated",
+        "sim": 0.9567
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p08_generic_price_talk",
+        "sim": 0.9441
+      },
+      {
+        "provider": "qwen-3.0-pro",
+        "pid": "p09_generic_aftercare",
+        "sim": 0.8149
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p01_waterlight_bed",
+        "sim": 0.8006
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p02_waterlight_closeup",
+        "sim": 0.8171
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p03_waterlight_standing",
+        "sim": 0.8525
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p04_photon_headband",
+        "sim": 0.877
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p05_photon_consult",
+        "sim": 0.9134
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p06_pico_mirror",
+        "sim": 0.8846
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p07_pico_seated",
+        "sim": 0.9244
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p08_generic_price_talk",
+        "sim": 0.9125
+      },
+      {
+        "provider": "qwen-3.0",
+        "pid": "p09_generic_aftercare",
+        "sim": 0.2719
+      }
+    ],
+    "impostors": [
+      {
+        "name": "03_t2i_same_description_differs.jpg",
+        "sim": 0.3391
+      },
+      {
+        "name": "batch_01_wuhan_shuiguang.jpg",
+        "sim": 0.436
+      },
+      {
+        "name": "batch_02_wuhan_rf_microneedle.jpg",
+        "sim": 0.333
+      },
+      {
+        "name": "batch_03_chengdu_photon.jpg",
+        "sim": 0.4362
+      },
+      {
+        "name": "batch_04_chengdu_thermage.jpg",
+        "sim": 0.3301
+      },
+      {
+        "name": "batch_05_shenzhen_shuiguang.jpg",
+        "sim": 0.4742
+      },
+      {
+        "name": "batch_06_shenzhen_picosecond.jpg",
+        "sim": 0.4802
+      }
+    ],
+    "note": "压缩件复算（人物合格模型口径）：阈值若与原图版不同，以本包为准重跑本工具取 threshold"
+  }
+}

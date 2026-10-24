@@ -1,0 +1,14 @@
+# 示例域包：零售/门店（用来证明"换行业不改代码"）
+#
+# 这个包是**完全自包含**的：matrix / scene / copy 都在包内，
+# 不引用 data/ 或 prompts/。加上 `AP_PACK=example-retail` 就能跑。
+# 它没有角色卡、没有医美禁用词——正说明核心流水线与行业无关。
+name: example-retail
+display: 零售门店内容（示例）
+version: "1"
+description: 演示第二个行业：城市 × 门店项目 × 主题，文案与合规规则与医美完全不同。
+
+matrix: matrix.yaml
+scene: scene.yaml
+copy: copy.yaml
+compliance: compliance.yaml

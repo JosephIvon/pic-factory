@@ -1,0 +1,11 @@
+{
+  "idempotency_key": "a004118539d12515",
+  "provider": "local",
+  "node_id": null,
+  "file_name": "local_a004118539d12515.jpg",
+  "local_path": "fixtures/images/local_a004118539d12515.jpg",
+  "prompt": "a 28 year old Chinese woman with shoulder length straight black hair parted in the middle, oval face, soft almond shaped eyes, a small mole on her left cheek, natural thin eyebrows, in Wuhan, a female client in her 30s with clear even skin tone, standing in front of a mirror in a bright clinic, calm satisfied expression, healthy even skin, relaxed shoulders, documentary editorial photography, natural window daylight, 35mm lens, shallow depth of field, candid composition, realistic skin texture with visible pores, unretouched, high detail",
+  "path": "i2i",
+  "seconds": 5.64,
+  "fixture_note": "缩放压缩副本（长边≤1024px, JPEG q88），仅供离线回放；原始 2K 产物用 live 模式重新生成"
+}

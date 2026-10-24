@@ -1,0 +1,25 @@
+# 画面层提示词模板
+#
+# scene.yaml 只描述"怎么拍"，不描述"拍什么内容"——内容由 data/tasks.yaml 决定。
+# 这里出现的所有字符串都会进入生成模型的 prompt，因此：
+#   - 必须是英文（中文会被渲染成乱码招牌，见 lessons 第 4 条）
+#   - negative 必须含 text/lettering/signage 类的抑制词（乱码招牌是医美内容的翻车点）
+
+version: "2026-10-24"
+
+city_english:
+  武汉: Wuhan
+  成都: Chengdu
+  深圳: Shenzhen
+
+photography: >-
+  documentary editorial photography, natural window daylight, 35mm lens,
+  shallow depth of field, candid composition, realistic skin texture with
+  visible pores, unretouched, high detail
+
+negative: >-
+  illustration, anime, 3d render, cgi, plastic skin, over-smoothed,
+  heavy airbrushing, beauty filter, distorted hands, extra fingers, deformed
+  face, text, lettering, chinese characters, signage, watermark, logo,
+  caption, subtitle, poster, ui element, border, collage, extra limbs,
+  blurry, lowres, jpeg artifacts

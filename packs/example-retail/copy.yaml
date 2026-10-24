@@ -1,0 +1,17 @@
+# 零售示例的文案模板与禁用词（与医美包完全独立）
+
+templates:
+  default:
+    title: "{city}{project}｜{copy_angle}"
+    body: |
+      {city} · {project}
+      本次记录：{copy_angle}
+
+      图片为演示用生成素材，仅用于展示内容生产流程。
+    tags: ["{city}", "{project}", "{copy_angle}"]
+
+banned_words:
+  - ["最好", "绝对化用语"]
+  - ["第一", "绝对化用语"]
+  - ["全网最低", "价格误导"]
+  - ["限时秒杀", "价格误导"]

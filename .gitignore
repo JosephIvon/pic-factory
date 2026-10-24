@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# 数据与产物
+data/*.db
+data/*.sqlite3
+out/
+runs/
+*.log
+
+# 本地密钥与配置（只提交 .example）
+.env
+.env.*
+!.env.example
+secrets/
+credentials.json
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 会话副产物（智能体自学习笔记，不入任何仓）
+.self-improving/

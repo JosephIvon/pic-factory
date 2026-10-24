@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aesthetics-pipeline"
+version = "0.1.0"
+description = "医美 AI 图文内容生产闭环 · MVP 演示项目"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2",
+    "typer",
+    "rich",
+    "pyyaml",
+    "pillow",
+    "numpy",
+]
+
+[project.optional-dependencies]
+qc = ["rapidocr-onnxruntime", "insightface>=0.2"]
+# 面板依赖是**可选**的：离线机上装不上 fastapi/uvicorn 时，
+# CLI 主链路必须照常可用（面板起不来 ≠ 演示做不成）。
+panel = ["fastapi>=0.110", "uvicorn>=0.27"]
+dev = ["pytest"]
+
+[project.scripts]
+aesthetics = "aesthetics_pipeline.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+aesthetics_pipeline = ["py.typed", "panel.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
