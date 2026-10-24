@@ -70,6 +70,8 @@ class DomainPack:
     scene: dict[str, Any]
     copy_cfg: dict[str, Any] = field(default_factory=dict)
     compliance: dict[str, Any] = field(default_factory=dict)
+    # 角色授权登记表（licenses.yaml）：商用红线，发布前检查读取。
+    licenses: dict[str, Any] = field(default_factory=dict)
 
     @property
     def version(self) -> str:
@@ -127,6 +129,8 @@ def load_pack(name: str | None = None) -> DomainPack:
 
     copy_path = _resolve(root, manifest.get("copy"))
     compliance_path = _resolve(root, manifest.get("compliance"))
+    # 授权表：清单可显式指定，否则默认包内 assets/licenses.yaml（有就用，没有就空）
+    licenses_path = _resolve(root, manifest.get("licenses") or "assets/licenses.yaml")
 
     copy_cfg = _read_yaml(copy_path) if copy_path else {}
     _validate_copy(pack_name, copy_cfg)
@@ -139,6 +143,7 @@ def load_pack(name: str | None = None) -> DomainPack:
         scene=scene,
         copy_cfg=copy_cfg,
         compliance=_read_yaml(compliance_path) if compliance_path else {},
+        licenses=_read_yaml(licenses_path) if licenses_path and licenses_path.exists() else {},
     )
 
 

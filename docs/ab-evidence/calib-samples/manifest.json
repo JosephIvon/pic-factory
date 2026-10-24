@@ -1,5 +1,5 @@
 {
-  "provenance": "源实验台 D:\\workspace\\picfactory\\ab（开发完成后删除）；本包是唯一可随仓库长期存的刻度样本",
+  "provenance": "源实验台 D:\\workspace\\picfactory（已于 2026-10-24 删除）；本包是唯一可随仓库长期存的刻度样本",
   "method": "insightface buffalo_l (BGR) gallery-max-cos，正样本=lab results.jsonl 最新 i2i，负样本=同域难负 impostors",
   "files": {
     "impostors\\03_t2i_same_description_differs.jpg": "f2ade609b8310903",

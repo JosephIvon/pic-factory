@@ -30,7 +30,7 @@ try:
     from rich.console import Console
     from rich.table import Table
 except ImportError as exc:  # pragma: no cover —— 依赖没装时给可执行的提示
-    # 裸 ModuleNotFoundError 最难查：先说清缺什么、怎么装。
+    # 裸 ModuleNotFoundError 在陌生机器上最难查：先说清缺什么、怎么装。
     missing = getattr(exc, "name", None) or "依赖"
     print(
         f"缺依赖 {missing}。先装本项目：pip install -e .\n"
@@ -55,7 +55,12 @@ from .models import GenItem, GenOutcome, TaskSpec
 from .pack import try_load_pack
 from .provider import build_provider
 from .provider.models_spec import get as get_model_spec
-from .qc.face import FaceGate, missing_face_reason, should_reject_on_identity
+from .qc.face import (
+    FaceGate,
+    face_gate_unavailable_reason,
+    missing_face_reason,
+    should_reject_on_identity,
+)
 from .qc.rules import rule_findings
 from .router import Router
 from .routing import RouteDecision
@@ -108,6 +113,25 @@ def _print_route_summary(
             seen.setdefault(d.rule_id, d.reason)
         for rule_id, reason in seen.items():
             console.print(f"[dim]  {rule_id} → {reason}[/dim]")
+
+
+def _factory_reject_reason(after_result: dict[str, Any], threshold: float) -> str:
+    """出厂复检的拒收理由——把三种"不合格"分开说，别混成一句。
+
+    * 没检成（人脸模型不可用 / 参考照没人脸）→ 身份一致性**没被校验过**，
+      与 OCR 闸「文字闸未执行，不能记为合格」同口径；
+    * 检了、换脸后画面里没有人脸 → **换脸没生效**，交付物里没有那个人；
+    * 检了、分数低于阈值 → 身份仍不达标。
+    """
+    if after_result.get("skipped"):
+        count = after_result.get("count")
+        if count is None:
+            return "换脸后复检：人脸模型不可用，人脸闸未执行，不能记为合格"
+        if count == 0:
+            return "换脸后复检：换脸后画面未检出人脸（换脸未生效），不放行"
+        return "换脸后复检：参考照检不到人脸，身份一致性无从校验（不放行）"
+    score = after_result.get("similarity")
+    return f"换脸后身份一致性 {score} 仍低于阈值 {threshold}"
 
 
 def _est_cost_for(outcome: GenOutcome, provider_name: str) -> float | None:
@@ -165,6 +189,7 @@ def plan(
 def generate(
     provider: str = typer.Option("matrix", help="生图后端：matrix | replay | local | auto（按规则表自动分流）"),
     replay_provider: str = typer.Option(None, help="回放时复现哪条路线：matrix | http_api | local"),
+    replay_model: str = typer.Option(None, help="回放时只取该模型档位的缓存（多档并存时指定）"),
     no_cloud: bool = typer.Option(False, help="本次运行不出网：全部交给本地栈（合规优先）"),
     city: str = typer.Option(None),
     project: str = typer.Option(None),
@@ -183,7 +208,7 @@ def generate(
     """批量生成：编译提示词 → 路由定后端 → 调后端 → 下载 → 记台账。
 
     `--provider auto` 时按规则表**逐条任务**决定后端（见 routing.py），
-    决策理由（rule_id + reason）会落台账，可逐条追溯"这张图为什么走这条线"。
+    决策理由（rule_id + reason）会落台账，事后能逐条追溯"这张图为什么走这条线"。
     `--reuse-adopted` 打开 L1 复用层（见 library.py）：发布量≠生成量，
     同素材已有合格产出时本地复制顶上，默认关。
     """
@@ -194,6 +219,26 @@ def generate(
         return
 
     # 1) 路由决策：auto 按规则表逐条定后端；手动模式统一后端
+    # 手动模式下规则表被绕过，"合规优先"这层保护也没了：把不出网的运行/任务
+    # 塞给云端后端＝静默把素材发出去。这种自相矛盾的输入在起跑前就拒，一张图都不发。
+    if provider != "auto" and provider in (routing.API, routing.MATRIX):
+        blocked = [spec for spec in specs if spec.no_cloud]
+        if no_cloud or blocked:
+            if no_cloud:
+                who = "本次运行带了 --no-cloud（全局不出网）"
+            else:
+                themes = sorted({spec.theme for spec in blocked})
+                who = (
+                    f"有 {len(blocked)} 条任务标记了不出网"
+                    f"（主题：{'、'.join(themes[:5])}{'…' if len(themes) > 5 else ''}）"
+                )
+            console.print(
+                f"[red]后端已手动指定为 {provider}（云端），但{who}。"
+                "要么去掉 --provider 让路由按规则表分流，要么改用 --provider local。"
+                "不出网是合规约束，不接受被命令行静默覆盖。[/red]"
+            )
+            raise typer.Exit(code=1)
+
     decisions: dict[str, RouteDecision] = {}
     groups: dict[str, list[TaskSpec]] = {}
     for spec in specs:
@@ -214,10 +259,25 @@ def generate(
     outcomes: list[GenOutcome] = []
     stats: dict[str, dict[str, float]] = {}
 
+    def _model_for(spec: TaskSpec) -> str:
+        """当前任务的模型档位（带缓存）。
+
+        幂等跳过与真正生成**必须用同一个值**：跳过按模型精确匹配，
+        如果两处各算一次（万一 choose_model 的输入变了），就会出现
+        "跳过用 A 档、记账用 B 档"的错位。这里只算一次、两处共用。
+        """
+        md = model_decisions.get(spec.idempotency_key)
+        if md is None:
+            md = choose_model(spec)
+            model_decisions[spec.idempotency_key] = md
+        return md.model_id
+
     with ledger.connect(db) as conn:
         for backend_name, group_specs in groups.items():
             if backend_name == "replay":
-                backend = build_provider(backend_name, prefer_provider=replay_provider)
+                backend = build_provider(
+                    backend_name, prefer_provider=replay_provider, model_id=replay_model
+                )
             elif backend_name == routing.API:
                 # 跨批预算熔断必须从台账播种：不传 conn 的话 provider 内部
                 # 兜底 from_env() 是零基数守卫，历史花费对它不可见，
@@ -250,13 +310,45 @@ def generate(
                 )
 
             if skip_existing:
-                done = ledger.successful_keys(conn, provider=backend.name)
-                before = len(items)
-                items = [i for i in items if i.task.idempotency_key not in done]
-                if before != len(items):
+                # 幂等跳过：**按 (后端, 模型档位) 精确匹配**。
+                # 只按后端的旧口径会把"换了模型"的任务当成已完成——同一批
+                # 换档位重跑时一张不生成，却看起来像"模型跑了"，这是模型
+                # 迭代场景里最贵的静默错误。非 API 后端没有档位概念，维持原口径。
+                done_all = ledger.successful_keys(conn, provider=backend.name)
+                done_by_model: dict[str, set[str]] = {}
+                keep: list[GenItem] = []
+                regenerated = 0
+                regenerated_cost = 0.0
+                for item in items:
+                    key = item.task.idempotency_key
+                    if key not in done_all:
+                        keep.append(item)
+                        continue
+                    if backend_name != routing.API:
+                        continue
+                    model_id = _model_for(item.task)
+                    if model_id not in done_by_model:
+                        done_by_model[model_id] = ledger.successful_keys(
+                            conn, provider=backend.name, model_id=model_id
+                        )
+                    if key in done_by_model[model_id]:
+                        continue
+                    # 该键在本后端产出过，但**不是当前档位**（换档 / 旧行没记模型）
+                    regenerated += 1
+                    regenerated_cost += get_model_spec(model_id).unit_cost_cny
+                    keep.append(item)
+                skipped = len(items) - len(keep)
+                if skipped:
+                    console.print(f"[dim]{backend.name}：幂等跳过 {skipped} 条已产出任务[/dim]")
+                if regenerated:
                     console.print(
-                        f"[dim]{backend.name}：幂等跳过 {before - len(items)} 条已产出任务[/dim]"
+                        f"[yellow]{backend.name}：{regenerated} 条任务在当前模型下没有产出"
+                        "（历史行属于其它档位，或升级前没记 model_id）→ 将重新生成。"
+                        f"预计额外花费约 ¥{regenerated_cost:.2f}；"
+                        "这是『换模型不再静默复用旧图』的预期行为。"
+                        "[dim]建议先用 --limit 小批试跑；不想重出请先确认档位或清理对应台账行。[/dim]"
                     )
+                items = keep
 
             # L1 复用（默认关）：在发给后端之前拦一道——同素材已有合格产出的，
             # 本地复制成"本后端产物"落台账（est_cost=0.0），不再花生成的钱。
@@ -287,13 +379,10 @@ def generate(
 
             # 模型档位与后端路由正交：只有 http_api 需要逐条定档（model_choice），
             # matrix/local 不涉及——所以非 API 组传 None，走各 provider 原契约。
+            # 走 _model_for 复用跳过阶段算过的档位，保证"跳过判定"与"记账档位"一致。
             model_ids: list[str | None] | None = None
             if backend_name == routing.API:
-                model_ids = []
-                for item in items:
-                    md = choose_model(item.task)
-                    model_decisions[item.task.idempotency_key] = md
-                    model_ids.append(md.model_id)
+                model_ids = [_model_for(item.task) for item in items]
 
             started = time.perf_counter()
             group_outcomes = (
@@ -476,7 +565,10 @@ def qc(
                     # 绑了角色的任务：与该角色的定妆照比身份
                     profile = profiles.get(row["character"]) or {}
                     ref_candidate = config.REPO_ROOT / (profile.get("ref") or "")
-                    reference_for_task = ref_candidate if ref_candidate.exists() else ref
+                    # is_file() 不是 exists()：profile 缺 ref 时 `REPO_ROOT / ""`
+                    # 就是仓库根目录，exists() 为真 → 拿目录当参考图 → Image.open
+                    # 抛 PermissionError，整条 qc 命令中断、事务回滚（判定全丢）。
+                    reference_for_task = ref_candidate if ref_candidate.is_file() else ref
                     face = gate.check(local_path, reference_for_task)
                     face_score = face.get("similarity")
                     face_detail = dict(face)
@@ -500,6 +592,13 @@ def qc(
                 )
                 if missing:
                     reasons.append(missing)
+                # **人脸闸没跑 ≠ 合格**（与 OCR 闸同口径）：人物任务的身份一致性
+                # 没被校验过就不能记为合格——"没法判断"不是"身份没问题"。
+                unverified = face_gate_unavailable_reason(
+                    bool(row.get("character")), face_detail
+                )
+                if unverified:
+                    reasons.append(unverified)
 
             verdict = "rejected" if reasons else "accepted"
             if face_detail:
@@ -508,9 +607,10 @@ def qc(
                 conn,
                 {
                     "idempotency_key": row["idempotency_key"],
-                    # 必须带上 provider：同一任务被 API 与本地栈各产出一行时，
-                    # 复合主键是 (idempotency_key, provider)，不指定就会只更新其中一行
+                    # 必须带上 provider 与 model_id：同一任务可能有多条产出
+                    # （不同后端 / 同一后端不同档位），不指定档位就会改错行。
                     "provider": row.get("provider"),
+                    "model_id": row.get("model_id"),
                     "qc_verdict": verdict,
                     "qc_reasons": reasons,
                     "qc_rules": details,
@@ -564,6 +664,7 @@ def adopt(
     decision: str = typer.Option("adopted", help="采纳决定：adopted | rejected"),
     note: str = typer.Option(None, help="备注；rejected 时写明不用原因"),
     provider: str = typer.Option(None, help="只改某个后端的产出；缺省改该任务全部行"),
+    model: str = typer.Option(None, help="只改某个模型档位的产出（同键多档时必须指定）"),
     db: Path = typer.Option(None),
 ) -> None:
     """抽检台人工采纳：质检放行后，**人**在抽检台上点"用/不用"。
@@ -571,19 +672,28 @@ def adopt(
     这是系统内部的一次真实点击，不是事后统计：采纳只写 adopted/adopted_at/
     adopt_note 三列（走 record_asset 的 ON CONFLICT DO UPDATE 局部语义），
     不碰 qc_verdict / local_path —— 机器放行 ≠ 人决定要用，两回事两列存证。
+
+    同一后端同一任务可能有多个模型档位的产出（variant）：此时**必须**用
+    `--model` 指定采纳哪一张，否则会报错——"一起采纳"等于把没看过的图也标成用了。
     """
     if decision not in ledger.ADOPT_DECISIONS:
         console.print(f"[red]未知决定 {decision!r}，只接受 adopted / rejected[/red]")
         raise typer.Exit(code=2)
-    with ledger.connect(db) as conn:
-        updated = ledger.record_adoption(conn, key, decision=decision, note=note, provider=provider)
+    try:
+        with ledger.connect(db) as conn:
+            updated = ledger.record_adoption(
+                conn, key, decision=decision, note=note, provider=provider, model_id=model
+            )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2)
     if not updated:
         console.print(f"[red]台账里没有这条产出：{key}（采纳只能点在真实存在的产出上）[/red]")
         raise typer.Exit(code=1)
     label = "采纳" if decision == "adopted" else "弃用"
     console.print(
         f"[green]✓ 已{label}（{updated} 行）[/green] [dim]{key}"
-        f"{' @' + provider if provider else ''}[/dim]"
+        f"{' @' + provider if provider else ''}{' [' + model + ']' if model else ''}[/dim]"
         + (f"\n[dim]备注：{note}[/dim]" if note else "")
     )
 
@@ -675,10 +785,19 @@ def faceswap_cmd(db: Path = typer.Option(None)) -> None:
     profiles = character_profiles()
     gate = FaceGate()
     with ledger.connect(db) as conn:
-        # 只处理图生图路线；被硬规则（画面内文字等）拒收的图不必换脸
-        rows = ledger.assets(
-            conn, "route = 'i2i' AND (qc_verdict IS NULL OR qc_verdict != 'rejected')"
+        # **只处理已质检放行的图生图产出**：没质检过的图连 OCR 文字闸都没跑过，
+        # 换完脸直接标合格＝拿没验过的产物出厂。
+        unchecked = ledger.assets(
+            conn, "route = 'i2i' AND (qc_verdict IS NULL OR qc_verdict = 'pending')"
         )
+        if unchecked:
+            console.print(
+                f"[red]有 {len(unchecked)} 条图生图产出还没质检，先跑 `aesthetics qc` "
+                "再换脸（不部分处理）。[/red]"
+            )
+            raise typer.Exit(code=1)
+        # 只处理图生图路线；被硬规则（画面内文字等）拒收的图不必换脸
+        rows = ledger.assets(conn, "route = 'i2i' AND qc_verdict = 'accepted'")
         table = Table(title="人脸替换与出厂复检（换脸前 → 换脸后 → 判定）")
         for col in ("后端", "城市", "项目", "换脸前", "换脸后", "判定", "产出"):
             table.add_column(col, overflow="fold")
@@ -700,34 +819,58 @@ def faceswap_cmd(db: Path = typer.Option(None)) -> None:
             # provider 必须进路径：matrix 与 local 两条线共用同一幂等键，
             # 不带 provider 会互相覆盖（DB 复合主键不冲突，磁盘会冲突）
             out_path = swapped_output_path(
-                str(row.get("provider") or "unknown"), row["idempotency_key"], config.OUT_DIR
+                str(row.get("provider") or "unknown"),
+                row["idempotency_key"],
+                config.OUT_DIR,
+                row.get("model_id"),
             )
             result = swapper.swap(local_path, reference, out_path)
             if not result.get("ok"):
+                # 换脸失败 = 身份一致性没被施加。这条行**绝不能留在 accepted**：
+                # 合规导出/发布只取 accepted 的行，于是没换脸的原图会被当成品发出去。
+                ledger.record_asset(
+                    conn,
+                    {
+                        "idempotency_key": row["idempotency_key"],
+                        "provider": row.get("provider"),
+                        "model_id": row.get("model_id"),
+                        "swapped_path": None,
+                        "face_similarity_after": None,
+                        "qc_verdict": "rejected",
+                        "qc_reasons": [
+                            f"换脸失败：{result['reason']}"
+                            "（修好后 `qc --reset` 重跑质检再 faceswap）"
+                        ],
+                    },
+                )
                 table.add_row(
-                    row.get("provider", "-"), row["city"], row["project"], "-", "-", "-",
-                    result["reason"],
+                    row.get("provider", "-"), row["city"], row["project"], "-", "-",
+                    "[red]拦截[/red]", result["reason"],
                 )
                 continue
 
             # 换脸前的分数**现算**：台账里那个可能是上一轮、旧选脸规则下写的
             before = similarity(local_path, reference)
-            after = similarity(out_path, reference)
-            # 出厂判定：换脸后仍低于阈值才算拒收（此时比对的是最终产物）
+            # 出厂判定跑在**最终产物**上：人脸闸 + 硬规则（OCR 文字闸等）。
+            # 交付出去的是这张换脸图，不是源图——闸门必须跑在它身上。
+            after_result = gate.check(out_path, reference)
+            after = after_result.get("similarity")
             threshold = gate.threshold
-            after_result = {"similarity": after, "threshold": threshold, "skipped": after is None}
-            accepted = not should_reject_on_identity(after_result, "post_swap")
+            findings = rule_findings(out_path)
+            reasons: list[str] = list(findings["reasons"])
+            if should_reject_on_identity(after_result, "post_swap"):
+                reasons.append(_factory_reject_reason(after_result, threshold))
+            accepted = not reasons
             verdict = "accepted" if accepted else "rejected"
-            reasons: list[str] = []
-            if not accepted:
-                reasons.append(f"换脸后身份一致性 {after} 仍低于阈值 {threshold}")
 
             ledger.record_asset(
                 conn,
                 {
                     "idempotency_key": row["idempotency_key"],
                     "provider": row.get("provider"),
-                    "swapped_path": str(out_path),
+                    "model_id": row.get("model_id"),
+                    # 拒收的行不再指向换脸产物：留着会让人看到一张"不存在"的成品
+                    "swapped_path": None if not accepted else str(out_path),
                     "face_similarity": before,
                     "face_similarity_after": after,
                     "qc_verdict": verdict,
@@ -737,7 +880,7 @@ def faceswap_cmd(db: Path = typer.Option(None)) -> None:
             table.add_row(
                 row.get("provider", "-"), row["city"], row["project"],
                 str(before), str(after),
-                "[green]放行[/green]" if accepted else "[red]拦截[/red]",
+                "[green]放行[/green]" if accepted else f"[red]拦截[/red] {reasons}",
                 str(out_path),
             )
     console.print(table)
@@ -1089,6 +1232,114 @@ def publish_cmd(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(2)
     console.print(f"[green]发布包：{path}[/green]")
+    console.print(
+        "[dim]发出去之后回填：`aesthetics publish-record <key> --channel ... --url ...`，"
+        "再 `aesthetics metrics <key> --impressions ... --clicks ...`，最后 `aesthetics funnel`[/dim]"
+    )
+
+
+@app.command("publish-record")
+def publish_record(
+    key: str = typer.Argument(..., help="幂等键（台账里的 idempotency_key）"),
+    provider: str = typer.Option("unknown", help="产出后端"),
+    channel: str = typer.Option(None, help="渠道：xiaohongshu / wechat / ..."),
+    url: str = typer.Option(None, help="发布后的链接"),
+    published_at: str = typer.Option(None, help="发布时间（默认现在）"),
+    note: str = typer.Option(None, help="备注"),
+    db: Path = typer.Option(None),
+) -> None:
+    """登记一次发布（回传表的入口）：素材真的发到哪个渠道了。"""
+    with ledger.connect(db) as conn:
+        ledger.record_publication(
+            conn,
+            idempotency_key=key,
+            provider=provider,
+            channel=channel,
+            url=url,
+            published_at=published_at,
+            note=note,
+        )
+    console.print(f"[green]已登记发布[/green]：{key} → {channel or '-'} {url or ''}")
+
+
+@app.command("metrics")
+def metrics_cmd(
+    key: str = typer.Argument(..., help="幂等键"),
+    channel: str = typer.Option(None, help="渠道"),
+    impressions: int = typer.Option(0, help="曝光量"),
+    clicks: int = typer.Option(0, help="点击/互动量"),
+    saves: int = typer.Option(0, help="收藏"),
+    comments: int = typer.Option(0, help="评论"),
+    shares: int = typer.Option(0, help="分享"),
+    measured_at: str = typer.Option(None, help="数据日期（默认现在；同日期覆盖）"),
+    provider: str = typer.Option("unknown", help="产出后端"),
+    note: str = typer.Option(None, help="备注"),
+    db: Path = typer.Option(None),
+) -> None:
+    """登记一次效果数据（回传表）：曝光/点击/收藏/评论/分享。"""
+    with ledger.connect(db) as conn:
+        ledger.record_metrics(
+            conn,
+            idempotency_key=key,
+            provider=provider,
+            channel=channel,
+            measured_at=measured_at,
+            impressions=impressions,
+            clicks=clicks,
+            saves=saves,
+            comments=comments,
+            shares=shares,
+            note=note,
+        )
+    console.print(f"[green]已登记效果[/green]：{key} 曝光 {impressions} / 点击 {clicks}")
+
+
+@app.command("funnel")
+def funnel_cmd(db: Path = typer.Option(None)) -> None:
+    """漏斗：产出 → 放行 → 人采纳 → 已发布 → 有数据。
+
+    "发布/效果"是**人回填的事实**：没回填就是 0，不拿采纳率冒充发布率。
+    """
+    with ledger.connect(db) as conn:
+        stats = ledger.funnel_summary(conn)
+
+    table = Table(title="内容生产 → 发布 → 效果")
+    for col in ("环节", "数量", "转化率"):
+        table.add_column(col)
+
+    def rate(num: int, den: int) -> str:
+        return f"{num / den * 100:.1f}%" if den else "—"
+
+    table.add_row("产出（落盘）", str(stats["generated"]), "—")
+    table.add_row("质检放行", str(stats["accepted"]), rate(stats["accepted"], stats["generated"]))
+    table.add_row("人工采纳", str(stats["adopted"]), rate(stats["adopted"], stats["accepted"]))
+    table.add_row("已发布", str(stats["published"]), rate(stats["published"], stats["adopted"]))
+    table.add_row("有回传数据", str(stats["measured"]), rate(stats["measured"], stats["published"]))
+    console.print(table)
+
+    totals = stats["totals"]
+    if totals["impressions"]:
+        console.print(
+            f"效果合计：曝光 {totals['impressions']} / 点击 {totals['clicks']}"
+            f" / 收藏 {totals['saves']} / 评论 {totals['comments']} / 分享 {totals['shares']}"
+            f" / CTR {totals['ctr'] * 100:.2f}%"
+        )
+        if stats["by_channel"]:
+            channel_table = Table(title="按渠道")
+            for col in ("渠道", "素材", "曝光", "点击", "收藏", "CTR"):
+                channel_table.add_column(col)
+            for row in stats["by_channel"]:
+                ctr = f"{row['ctr'] * 100:.2f}%" if row["ctr"] is not None else "—"
+                channel_table.add_row(
+                    str(row["channel"]), str(row["assets"]), str(row["impressions"]),
+                    str(row["clicks"]), str(row["saves"]), ctr,
+                )
+            console.print(channel_table)
+    else:
+        console.print(
+            "[dim]还没有效果回填。发布后用 `aesthetics publish-record` + "
+            "`aesthetics metrics` 录入，这里才会出现 CTR。[/dim]"
+        )
 
 
 if __name__ == "__main__":

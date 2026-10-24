@@ -43,7 +43,7 @@ def test_absolute_cache_path_still_resolves(tmp_path) -> None:
 
     这里必须用**当前平台的绝对路径**：写死 `C:/tmp/x.png` 测的其实是本机路径语法
     ——它在 Windows 上是绝对路径，在 POSIX 上是相对路径（会被锚回仓库根），
-    同一份断言在两种系统上含义相反，CI（Linux）会因此红。
+    同一份断言在两种系统上含义相反，CI（Linux）会因此红（实测 1 failed 173 passed）。
     """
     raw = str(tmp_path / "legacy.png")
     assert Path(raw).is_absolute(), raw
@@ -81,7 +81,7 @@ def test_cache_path_layout() -> None:
     assert cache_path(Path("c"), "k").as_posix() == "c/k.json"
 
 
-# ---------------- http_api 进回放口径 + 档位随行 ----------------
+# ---------------- Trae S4：http_api 进回放口径 + 档位随行 ----------------
 
 
 def test_replay_finds_http_api_entry_and_restores_model_id(tmp_path) -> None:
@@ -116,3 +116,61 @@ def test_matrix_still_wins_over_http_api_in_provider_order(tmp_path) -> None:
     _write(tmp_path, "matrix")
     _write(tmp_path, "http_api")
     assert read_cache(tmp_path, "k1")["provider"] == "matrix"
+
+
+# ---------------- 多档并存：缓存也不能互相覆盖 ----------------
+
+
+def _write_model(cache_dir: Path, model: str, key: str = "k1") -> Path:
+    img = cache_dir.parent / f"{model}.png"
+    img.parent.mkdir(parents=True, exist_ok=True)
+    img.write_bytes(b"\x89PNG\r\n\x1a\nfake")
+    return write_cache(
+        cache_dir, key=key, provider="http_api", node_id=f"n-{model}",
+        file_name=f"{key}__{model}.png", local_path=str(img), prompt="p",
+        path="i2i", seconds=1.0, model_id=model, portable=False,
+    )
+
+
+def test_two_models_same_key_do_not_overwrite(tmp_path) -> None:
+    cache_dir = tmp_path / "cache"
+    a = _write_model(cache_dir, "doubao-seedream-4-0")
+    b = _write_model(cache_dir, "qwen-image-3.0-pro")
+    assert a != b
+    assert a.name.endswith("__doubao-seedream-4-0.json")
+    assert b.name.endswith("__qwen-image-3.0-pro.json")
+    assert read_cache(cache_dir, "k1", "http_api", "doubao-seedream-4-0")["model_id"] == "doubao-seedream-4-0"
+    assert read_cache(cache_dir, "k1", "http_api", "qwen-image-3.0-pro")["model_id"] == "qwen-image-3.0-pro"
+
+
+def test_read_with_model_does_not_borrow_another_model(tmp_path) -> None:
+    """指定档位时，绝不拿别的档的缓存冒充。"""
+    cache_dir = tmp_path / "cache"
+    _write_model(cache_dir, "doubao-seedream-4-0")
+    assert read_cache(cache_dir, "k1", "http_api", "qwen-image-3.0-pro") is None
+
+
+def test_read_without_model_falls_back_to_latest_model_file(tmp_path) -> None:
+    """不指定档位（旧调用）仍能回放：取该 key 最新的档位缓存。"""
+    cache_dir = tmp_path / "cache"
+    _write_model(cache_dir, "m1")
+    _write_model(cache_dir, "m2")
+    entry = read_cache(cache_dir, "k1", "http_api")
+    assert entry is not None and entry["model_id"] in {"m1", "m2"}
+
+
+def test_replay_picks_requested_model(tmp_path) -> None:
+    from aesthetics_pipeline.models import GenItem, TaskSpec
+    from aesthetics_pipeline.provider.replay import ReplayProvider
+
+    cache_dir = tmp_path / "out" / "cache"
+    _write_model(cache_dir, "m1")
+    _write_model(cache_dir, "m2")
+    spec = TaskSpec(
+        city="武汉", project="光子嫩肤", theme="术后修复", channel="xiaohongshu",
+        character="lin", aspect_ratio="3:4", resolution="2K", idempotency_key="k1",
+    )
+    item = GenItem(task=spec, prompt="p", negative_prompt="", aspect_ratio="3:4",
+                   resolution="2K", input_urls=[])
+    out = ReplayProvider(out_dir=tmp_path / "out", prefer_provider="http_api", model_id="m2").generate([item])
+    assert out[0].ok and out[0].model_id == "m2"

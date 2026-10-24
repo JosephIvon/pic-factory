@@ -103,7 +103,7 @@ REGISTRY: dict[str, ModelSpec] = {
             mode="async",
             supports_negative=True,
             watermark_default_on=False,
-            notes="人物封面主力；订正后均值 0.913/非遮挡最低 0.859/方差 0.033，全档下限最高（见 model-sim-recompute.json）",
+            notes="人物封面主力；订正后剔遮挡均值 0.913/非遮挡最低 0.859/剔遮挡标准差 0.033，全档下限最高（见 model-sim-recompute.json）",
         ),
         ModelSpec(
             model_id="qwen-image-3.0",

@@ -4,8 +4,7 @@
 > **实验台口径**（YuNet 按面积取脸），已被后续审计订正。生产口径逐模型复算值见
 > `model-sim-recompute.json`；生产人脸闸阈值以同域样本标定的 **T=0.57** 为准
 > （`threshold-calibration-production.json`）。文中"陌生人基线 0.341"是 n=1 孤例（已作废）、
-> "0.45 漂移线"为未标定经验值——两者都**不得再被引用**。订正依据见本目录
-> `model-sim-recompute.json` 与 `threshold-calibration-production.json`。
+> "0.45 漂移线"为未标定经验值——两者都**不得再被引用**。完整裁决链见 `docs/项目史.md` §4。
 
 > 同一角色卡（定妆照 1 张作参考图）、同一批 10 条英文画面 prompt、同一 3:4 画幅（1536×2048）、同一后处理（仅保留平台水印，盲测素材已裁掉底部水印）。
 

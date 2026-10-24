@@ -1,6 +1,6 @@
 """通道顺序验证：insightface 的 app.get() 到底期望 RGB 还是 BGR。
 
-现象：一张大笑的人脸特写（out/local_images/a004118539d12515.png）用 RGB 传入时
+现象：一张大笑的人脸特写（evidence/15_local_a004118539d12515.png）用 RGB 传入时
 检不到任何脸。insightface 的检测器是按 OpenCV 惯例训练的（BGR），
 传 RGB 等于把肤色通道反了 —— 检测率会掉。
 
@@ -54,10 +54,12 @@ def main() -> int:
     print(f"参考照 {REFERENCE.name}: RGB 检出 {len(ref_rgb)} 张 / BGR 检出 {len(ref_bgr)} 张")
     ref = (ref_bgr or ref_rgb)[0]["emb"]
 
+    # 全部指向仓内证据：原图曾放在上游会话工作区的 out/ 下，
+    # 那是临时目录、不随仓库走——现在统一收进 evidence/。
     targets = [
-        REPO_ROOT / "out" / "local_images" / "a004118539d12515.png",
-        REPO_ROOT / "out" / "local_images" / "88f3473f349ba298.png",
-        REPO_ROOT / "out" / "images" / "783aa950f43138d2.png",
+        REPO_ROOT / "evidence" / "15_local_a004118539d12515.png",
+        REPO_ROOT / "evidence" / "12_local_i2i_generated.png",
+        REPO_ROOT / "evidence" / "10_api_i2i_generated.png",
         REPO_ROOT / "evidence" / "02_i2i_same_person.jpg",
         REPO_ROOT / "evidence" / "batch" / "batch_03_chengdu_photon.jpg",
     ]

@@ -37,7 +37,7 @@ def test_persona_task_never_selects_banned_swap_models() -> None:
 def test_persona_picks_cheapest_safe_tier() -> None:
     """合格档里取最低价：5.0-Flash(¥0.10, 订正后均值 0.815) 先于 Qwen-3.0(¥0.18)。
 
-    取脸口径订正（model-sim-recompute.json）后 Flash 平反回可选池；
+    取脸口径订正（model-sim-recompute.json）后 Flash 平反出候选人；
     一致性由"两层身份 + 换脸兜底"保证，价格成为区分项。
     """
     d = choose_model(spec(character="lin", path="i2i", ref_asset="refs/lin.png"))

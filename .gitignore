@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+# pytest 的临时目录：TEMP 为空时 pytest 会退回 CWD，落在这里
+pytest-of-*/
 .ruff_cache/
 *.egg-info/
 
@@ -26,3 +28,6 @@ credentials.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# 会话副产物（智能体自学习笔记，不入任何仓）
+.self-improving/

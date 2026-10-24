@@ -1,6 +1,6 @@
-"""预-mortem 对抗演练：设想外部会怎么攻击这套流水线，负向测试把攻击钉死。
+"""预-mortem 对抗演练：设想评审者会怎么攻击这套流水线，负向测试把攻击钉死。
 
-视角不是"我的功能对不对"，是"如果我是攻击者，我要挑一个能让这套防线崩掉的
+视角不是"我的功能对不对"，是"如果我是挑剔的评审者，我要挑一个能让这套叙事崩掉的
 攻击"。每一个测试是一段中文 docstring 讲清楚"这是谁的什么攻击、拦住它靠哪个机制"。
 
 全部离线：注入假 http 客户端，绝不打真实网络、绝不需要 key。假客户端的注入手法
@@ -131,7 +131,7 @@ def ark_provider(tmp_path, *, ark, budget=None, download=None):
 # ===========================================================================
 
 def test_chinese_label_injected_into_visual_mapping_breaks_invariant(tmp_path) -> None:
-    """攻击：外部改坏 matrix 的 visual 映射，把中文原始标签（"光子嫩肤"）直接
+    """攻击：改坏 matrix 的 visual 映射，把中文原始标签（"光子嫩肤"）直接
     拼进画面描述——这正是产生乱码招牌的成因。
 
     拦它靠 router.compile 的**编译期不变量校验**（router.py）：原始标签一旦出现在
@@ -154,7 +154,7 @@ def test_chinese_label_injected_into_visual_mapping_breaks_invariant(tmp_path) -
 
 
 def test_visual_prompt_field_is_ignored_and_chinese_stays_out(tmp_path) -> None:
-    """攻击：TaskSpec 上有个 visual_prompt 字段，调用方往里塞满中文标签原文
+    """攻击：TaskSpec 上有个 visual_prompt 字段，有人往 visual_prompt 里塞满中文标签原文
     （"夏日透亮 直出招牌"），指望它被当成正向提示词直接下发。
 
     拦它靠**编译只吃 matrix 映射、根本不读 spec.visual_prompt**（router.compile
@@ -184,7 +184,7 @@ def test_visual_prompt_field_is_ignored_and_chinese_stays_out(tmp_path) -> None:
 # ===========================================================================
 
 def test_idempotent_key_recorded_is_skipped_by_default(tmp_path) -> None:
-    """攻击：调用方用同一个幂等键重复提交，指望流水线忘了自己产过、再花一次钱。
+    """攻击：用同一个幂等键重复提交，指望流水线忘了自己产过、再花一次钱。
 
     拦它靠 ledger.successful_keys（只认 local_path 非空的成功行，按 provider 过滤）
     配合 cli generate 的默认 skip（skip_existing=True）。断言：成功产出一张并落账
@@ -208,7 +208,7 @@ def test_idempotent_key_recorded_is_skipped_by_default(tmp_path) -> None:
 
 
 def test_duplicate_billed_successes_charge_exactly_once_each(tmp_path) -> None:
-    """攻击：即便绕过默认 skip 强行重发同一键（明说"我就是要 --no-skip 再来一遍"），
+    """攻击：即便绕过默认 skip 强行重发同一键（用户说"我就是要 --no-skip 再来一遍"），
     预算扣减必须是"单价 × 成功张数"，一次都不许多扣。
 
     拦它靠 http_api 的计费闸门：只有**成功且计费断言相符**才 self.budget.charge，
@@ -247,7 +247,7 @@ def test_duplicate_billed_successes_charge_exactly_once_each(tmp_path) -> None:
 # ===========================================================================
 
 def test_budget_full_blocks_request_before_api_and_no_growth(tmp_path) -> None:
-    """攻击：调用方把预算烧到 80% 熔断线以上还继续 generate，指望它照样把请求打出去
+    """攻击：把预算烧到 80% 熔断线以上还继续 generate，指望它照样把请求打出去
     （然后被上游 429 打死 / 把整月配额烧穿）。
 
     拦它靠 http_api 的第 2 道闸门：`if not self.budget.can_spend(...)` 就 return，
@@ -269,7 +269,7 @@ def test_budget_full_blocks_request_before_api_and_no_growth(tmp_path) -> None:
 # ===========================================================================
 
 def test_network_outage_fails_cleanly_then_replay_delivers(tmp_path) -> None:
-    """攻击：现场断网。要验证两件事——(a) 失败会不会被记成"生成成功"或扣钱；
+    """攻击：运行环境断网。这里验证两件事——(a) 失败会不会被记成"生成成功"或扣钱；
     (b) 断网后整条流水线是不是直接崩掉、没法演示。
 
     拦 (a) 靠 http_api 的异常兜底：**不计费、不落账、不落盘**，且失败 outcome 带
@@ -312,7 +312,7 @@ def test_network_outage_fails_cleanly_then_replay_delivers(tmp_path) -> None:
 # ===========================================================================
 
 def test_model_ids_length_mismatch_raises_before_any_request(tmp_path) -> None:
-    """攻击：同批混合不同模型时，传入的 model_ids 与 items 长度不一致（例如 2 items
+    """攻击：同批混合不同模型时，调用方传 model_ids 与 items 长度不一致（例如 2 items
     配 1 个 model_id），指望它错位发请求、把 A 任务的图用 B 模型的档位计费。
 
     拦它靠 StandardApiProvider.generate 的入口契约校验：长度不等直接 ValueError，
@@ -326,7 +326,7 @@ def test_model_ids_length_mismatch_raises_before_any_request(tmp_path) -> None:
 
 def test_ark_billing_count_mismatch_rejected_not_charged(tmp_path) -> None:
     """攻击：ark 响应谎报 usage.generated_images=2（服务端多计费 / 解析错位），
-    而画面只返回 1 张 URL。要验证的是会不会照单付 2 倍钱。
+    而画面只返回 1 张 URL。验证会不会照单付 2 倍钱。
 
     拦它靠 http_api 的**计费断言**（wan 的 n=4 陷阱同一条防线，这里从 ark 侧攻）：
     billed != 1 就拒绝落账、return，**不扣预算、不写缓存**。注意这与 test_http_api 里

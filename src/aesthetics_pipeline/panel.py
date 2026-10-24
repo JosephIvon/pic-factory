@@ -5,12 +5,12 @@
   * 写 —— 调 CLI 子进程（`python -m aesthetics_pipeline.cli generate ...`）
 流水线逻辑只有一份，面板不重复实现；流水线也不依赖面板。
 
-为什么要面板：评审口径不是"能跑"，而是"能交付"——全栈交付和部署维护
-要有硬证据。这个面板就是那件证据：
+为什么要面板：交付的验收口径不是"能跑"，而是"能操作"——
+批量生产要能被人看着跑。这个面板就是那件证据：
 提交任务 → 自动路由 → 出图 → 质检 → 换脸兜底 → 画廊逐张可查
 （判定理由 / 命中哪条路由规则 / 这张花了多少钱）。
 
-静态页零 CDN 依赖：断网环境下页面也必须照样能开。
+静态页零 CDN 依赖：内网/断网环境页面必须照样能开。
 """
 
 from __future__ import annotations
@@ -36,8 +36,79 @@ from .taskspec import expand, filter_specs, load_yaml, pack_matrix, scene_config
 
 PANEL_HTML = Path(__file__).with_name("panel.html")
 
-# 任务状态：内存里存就够了，进程重启就没了 —— 面板不是台账，台账才是。
-JOBS: dict[str, dict[str, Any]] = {}
+class JobStore:
+    """面板任务的内存视图 + 落库（P0-2）。
+
+    内存里保留一份是为了让 `_run_job` 继续用 `job["status"] = ...` 这种写法；
+    每次状态变化显式 `save()` 落库，进程重启后 `/api/jobs` 仍能回答
+    "上一批跑到哪一步"，并且不会因为"内存里没有 running、库里却留着 running"
+    把提交闸永久锁死（启动时把残留 running 标成 interrupted）。
+    """
+
+    def __init__(self) -> None:
+        self._jobs: dict[str, dict[str, Any]] = {}
+        self._loaded = False
+        self._recovered = False
+
+    # —— 映射接口（保持既有调用写法不变）——
+    def __getitem__(self, key: str) -> dict[str, Any]:
+        return self._jobs[key]
+
+    def __setitem__(self, key: str, value: dict[str, Any]) -> None:
+        self._jobs[key] = value
+        self.save(key)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self._jobs.get(key, default)
+
+    def values(self) -> list[dict[str, Any]]:
+        return list(self._jobs.values())
+
+    def items(self) -> list[tuple[str, dict[str, Any]]]:
+        return list(self._jobs.items())
+
+    def __len__(self) -> int:
+        return len(self._jobs)
+
+    def clear(self) -> None:
+        """只清内存（测试用）；库里的历史任务保留。"""
+        self._jobs.clear()
+
+    # —— 持久化 ——
+    def ensure_ready(self) -> None:
+        if not self._loaded:
+            with ledger.connect() as conn:
+                for row in ledger.jobs_all(conn, limit=200):
+                    self._jobs.setdefault(row["id"], row)
+            self._loaded = True
+        if not self._recovered:
+            with ledger.connect() as conn:
+                n = ledger.recover_interrupted_jobs(conn)
+            if n:
+                for job in self._jobs.values():
+                    if job.get("status") == "running":
+                        job["status"] = "interrupted"
+            self._recovered = True
+
+    def save(self, job_id: str) -> None:
+        job = self._jobs.get(job_id)
+        if not job:
+            return
+        job["updated_at"] = ledger.now()
+        try:
+            with ledger.connect() as conn:
+                ledger.upsert_job(conn, job)
+        except Exception:  # 落库失败不该打断生成；下一次保存会重试
+            pass
+
+
+# 任务状态：内存视图 + 落库（见 JobStore）。
+JOBS = JobStore()
+
+# 提交闸的临界区锁：`if 有 running: 409` 与 `JOBS[id]=...` 必须原子。
+# 没有它时两个并发 POST 可能同时通过检查 → 两条 CLI 并行 → 双份花钱
+# （各自 skip_existing 看不到对方、各持独立 BudgetGuard、抢同一个 SQLite）。
+_JOBS_LOCK = threading.Lock()
 
 app = FastAPI(title="医美 AI 图文闭环 · 控制台", version="0.1.0")
 
@@ -62,6 +133,17 @@ def _panel_token() -> str:
     return (os.environ.get("AP_PANEL_TOKEN") or "").strip()
 
 
+def _token_matches(supplied: str, expected: str) -> bool:
+    """定长时间比较，且**先编码成 bytes**。
+
+    `secrets.compare_digest` 只接受 ASCII-only 的 str：请求里带非 ASCII token
+    （`?token=中文`、或 Bearer 头里塞中文）会抛 TypeError，中间件把它变成 500，
+    等于把"凭证错"暴露成"服务端崩了"。编码成 UTF-8 bytes 后比较对任意内容都成立，
+    仍然保持定长语义。
+    """
+    return secrets.compare_digest(supplied.encode("utf-8"), expected.encode("utf-8"))
+
+
 def _supplied_credentials(request: Request) -> list[str]:
     """从请求里取候选凭据：query 的 token + Bearer 头（大小写不敏感的 scheme）
     + `panel_token` cookie（由 `/?token=…` 引导写入，让页面里的 fetch/img 免逐请求带参）。"""
@@ -84,7 +166,7 @@ async def require_panel_token(request: Request, call_next):
     expected = _panel_token()
     path = request.url.path
     if expected and (path.startswith("/api/") or path.startswith("/files/")):
-        if not any(secrets.compare_digest(s, expected) for s in _supplied_credentials(request)):
+        if not any(_token_matches(s, expected) for s in _supplied_credentials(request)):
             return JSONResponse(
                 status_code=401,
                 content={
@@ -170,9 +252,13 @@ def _final_path(row: dict[str, Any]) -> str | None:
 def _brief(row: dict[str, Any]) -> dict[str, Any]:
     """画廊卡片要的字段（够画卡片 + 排序，不含大字段）。"""
     return {
-        "id": f"{row['idempotency_key']}:{row.get('provider')}",
+        # id 必须带档位：同一任务同一后端可能有多条（不同模型），
+        # 只用 key:provider 会让两档卡片在前端撞成同一条。
+        "id": f"{row['idempotency_key']}:{row.get('provider')}:{row.get('variant') or '-'}",
         "key": row["idempotency_key"],
         "provider": row.get("provider"),
+        "variant": row.get("variant"),
+        "model_id": row.get("model_id"),
         "city": row.get("city"),
         "project": row.get("project"),
         "theme": row.get("theme"),
@@ -289,14 +375,20 @@ def api_assets(limit: int = 200) -> dict[str, Any]:
 
 
 @app.get("/api/assets/{key}")
-def api_asset_detail(key: str, provider: str | None = None) -> dict[str, Any]:
-    """单张明细：质检明细 + 路由理由 + 成本。"""
+def api_asset_detail(key: str, provider: str | None = None, model: str | None = None) -> dict[str, Any]:
+    """单张明细：质检明细 + 路由理由 + 成本。
+
+    同一任务可能有多个档位（variant）：`model` 指定档位；不指定时取最新一条，
+    并在返回里带上 `variants` 列表，前端可以提示"这条还有其它档位"。
+    """
     with ledger.connect() as conn:
-        rows = [
-            r
-            for r in ledger.assets(conn)
-            if r["idempotency_key"] == key and (provider is None or r.get("provider") == provider)
-        ]
+        all_rows = [r for r in ledger.assets(conn) if r["idempotency_key"] == key]
+    rows = [
+        r
+        for r in all_rows
+        if (provider is None or r.get("provider") == provider)
+        and (model is None or str(r.get("model_id") or "") == model)
+    ]
     if not rows:
         raise HTTPException(404, f"没有这条产出: {key}")
     row = rows[0]
@@ -314,6 +406,16 @@ def api_asset_detail(key: str, provider: str | None = None) -> dict[str, Any]:
             "created_at": row.get("created_at"),
             # 这张图的金额：台账生成时记的是事实；没记就按当前单价假设现算
             "unit_cost": config.unit_cost_for(row.get("provider") or "", seconds),
+            # 同一任务的其它档位：前端据此提示"这条还有 N 个模型版本"
+            "variants": [
+                {
+                    "provider": r.get("provider"),
+                    "model_id": r.get("model_id"),
+                    "verdict": r.get("qc_verdict"),
+                    "adopted": r.get("adopted"),
+                }
+                for r in all_rows
+            ],
         }
     )
     return {"asset": detail}
@@ -334,6 +436,13 @@ def api_summary() -> dict[str, Any]:
         return ledger.summary(conn)
 
 
+@app.get("/api/funnel")
+def api_funnel() -> dict[str, Any]:
+    """漏斗：产出 → 放行 → 采纳 → 发布 → 效果（回填事实，缺失即 0）。"""
+    with ledger.connect() as conn:
+        return ledger.funnel_summary(conn)
+
+
 # ---------------------------------------------------------------- 写：走 CLI
 
 
@@ -345,7 +454,7 @@ def _run_job(job_id: str, steps: list[tuple[str, list[str]]]) -> None:
     """跑一串 CLI 命令，边跑边把输出记进 job 日志。
 
     写操作走 CLI 子进程而不是在面板里复刻一遍流水线：
-    逻辑只有一份，面板只是 CLI 的一层皮。
+    逻辑只有一份：面板只是 CLI 的一层皮。
     """
     job = JOBS[job_id]
     try:
@@ -353,6 +462,7 @@ def _run_job(job_id: str, steps: list[tuple[str, list[str]]]) -> None:
             job["steps"].append(
                 {"name": name, "status": "running", "cmd": " ".join(cmd[2:])}
             )
+            JOBS.save(job_id)  # 每步开始时落库：重启后能看出卡在哪一步
             proc = subprocess.Popen(
                 cmd,
                 cwd=str(config.REPO_ROOT),
@@ -369,14 +479,47 @@ def _run_job(job_id: str, steps: list[tuple[str, list[str]]]) -> None:
                     job["log"].append(f"[{name}] {line}")
             rc = proc.wait()
             job["steps"][-1].update({"status": "done" if rc == 0 else "failed", "rc": rc})
+            JOBS.save(job_id)
             if rc != 0:
                 job["status"] = "failed"
                 job["log"].append(f"[{name}] 退出码 {rc}，后续步骤跳过")
+                JOBS.save(job_id)
                 return
         job["status"] = "done"
+        JOBS.save(job_id)
     except Exception as exc:  # pragma: no cover —— 兜底，别让后台线程静默死掉
         job["status"] = "failed"
         job["log"].append(f"[error] {exc}")
+        JOBS.save(job_id)
+
+
+def _admit_job(steps: list[tuple[str, list[str]]]) -> str:
+    """提交闸：**查 running 与登记新 job 必须在同一临界区**。
+
+    非原子时两个并发 POST 会同时通过 `if any(running)` 检查 → 起两条 CLI →
+    双份花钱（各自 skip_existing 看不到对方、各持独立 BudgetGuard、抢同一个
+    SQLite）。锁只保护"检查 + 插入"这一小段，不覆盖生成过程。
+
+    返回新 job_id；已有 running 批时抛 409。
+    """
+    job_id = uuid.uuid4().hex[:12]
+    with _JOBS_LOCK:
+        # 先把库里残留的 running 标成 interrupted（上次进程已死），否则重启后
+        # 提交闸会被一条"内存里根本没有"的任务永久锁死。测试里 JOBS 可能被替换
+        # 成普通 dict，没有 ensure_ready 就跳过。
+        ensure = getattr(JOBS, "ensure_ready", None)
+        if ensure is not None:
+            ensure()
+        if any(job.get("status") == "running" for job in JOBS.values()):
+            raise HTTPException(409, "已有生成任务在跑，请等它结束后再提交")
+        JOBS[job_id] = {
+            "id": job_id,
+            "status": "running",
+            "created_at": ledger.now(),
+            "steps": [],
+            "log": [],
+        }
+    return job_id
 
 
 @app.post("/api/generate")
@@ -387,7 +530,7 @@ def api_generate(payload: dict[str, Any]) -> dict[str, Any]:
     让浏览器同步等会把请求挂死。
     """
     provider = str(payload.get("provider") or "auto")
-    if provider not in ("auto", "matrix", "local", "replay"):
+    if provider not in ("auto", "matrix", "http_api", "local", "replay"):
         raise HTTPException(400, f"未知后端 {provider!r}")
     raw_limit = payload.get("limit")
     try:
@@ -396,11 +539,6 @@ def api_generate(payload: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(400, f"limit 不是整数: {raw_limit!r}")
     if limit < 1 or limit > 50:
         raise HTTPException(400, "limit 取值范围 1~50")
-    # 并发闸：一次只放一个批。两条 CLI 并行会互相踩 skip_existing（都查不到
-    # 对方的行 → 双份花钱）、各持独立 BudgetGuard（熔断基数互相不可见），
-    # 还要抢同一个 SQLite。双击/脚本重放都在这一行挡掉。
-    if any(job.get("status") == "running" for job in JOBS.values()):
-        raise HTTPException(409, "已有生成任务在跑，请等它结束后再提交")
 
     gen = _cli("generate", "--provider", provider, "--limit", str(limit))
     for field in ("city", "project", "theme"):
@@ -418,14 +556,7 @@ def api_generate(payload: dict[str, Any]) -> dict[str, Any]:
             ("report", _cli("report")),
         ]
 
-    job_id = uuid.uuid4().hex[:12]
-    JOBS[job_id] = {
-        "id": job_id,
-        "status": "running",
-        "created_at": time.time(),
-        "steps": [],
-        "log": [],
-    }
+    job_id = _admit_job(steps)
     threading.Thread(target=_run_job, args=(job_id, steps), daemon=True).start()
     return {"job_id": job_id, "steps": [name for name, _ in steps]}
 
@@ -451,6 +582,9 @@ def api_adopt(payload: dict[str, Any]) -> dict[str, Any]:
     provider = str(payload.get("provider") or "").strip()
     if provider:
         args += ["--provider", provider]
+    model = str(payload.get("model") or payload.get("model_id") or "").strip()
+    if model:
+        args += ["--model", model]
     cmd = _cli(*args)
     try:
         proc = subprocess.run(
@@ -479,7 +613,10 @@ def api_adopt(payload: dict[str, Any]) -> dict[str, Any]:
 
 @app.get("/api/jobs")
 def api_jobs() -> dict[str, Any]:
-    jobs = sorted(JOBS.values(), key=lambda j: j["created_at"], reverse=True)
+    ensure = getattr(JOBS, "ensure_ready", None)
+    if ensure is not None:
+        ensure()
+    jobs = sorted(JOBS.values(), key=lambda j: str(j.get("created_at") or ""), reverse=True)
     return {
         "items": [
             {
@@ -500,4 +637,6 @@ def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
 
     # fail-closed：非回环绑定又没设 token 时直接拒绝启动，而不是"先起来再说"。
     assert_serve_security(host)
+    # 启动即把上次进程残留的 running 标成 interrupted，并把历史任务读进内存视图。
+    JOBS.ensure_ready()
     uvicorn.run(app, host=host, port=port, log_level="info")

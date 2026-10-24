@@ -1,14 +1,13 @@
 """自动路由：按任务特征决定交给哪个后端。
 
-核心要求是"由系统按任务自动调用模型"——所以"选哪个后端"这一步不能靠人敲
+需求的原话是"由系统按任务自动调用模型"——所以"选哪个后端"这一步不能靠人敲
 `--provider`。这一模块把选型做成**规则表**：有序、先命中先用，每条决策都带
-`rule_id` + 理由，落台账，可逐条追溯"这张图为什么走了这条线"。
+`rule_id` + 理由，落台账，事后能逐条追溯"这张图为什么走了这条线"。
 
 规则的依据全部是**实测**，不是偏好：
 
   * 强人物一致 → API：实测 API 图生图的身份保持高于本地栈（口径与数字见
-    测试 `test_model_choice` 与 `docs/MODEL-CHOICE.md`；台账每行都记了
-    `face_similarity`，可逐张核对）。
+    README 第 6 节；台账每行都记了 `face_similarity`，可逐张核对）。
   * 泛化人物 / 铺量 → 本地栈：边际成本≈电费，数据不出网。
   * 不出网 → 本地栈：合规优先，压过质量优先（一致性由后置换脸兜底，
     实测两条路线换脸后都收敛到同一区间，差异被抹平）。
@@ -17,7 +16,7 @@
     所以走质量更高的一侧。
 
 > 规则文本里**不写死数字**：数字会随模型/口径变化，写死就会与台账对不上。
-> 理由只说"往哪边走、依据是什么口径"，数字去台账和测试/文档查。
+> 理由只说"往哪边走、依据是什么口径"，数字去台账和 README 查。
 
 优先级：**合规 > 排版 > 一致性 > 成本**。
 """
@@ -36,7 +35,7 @@ from .models import TaskSpec
 MATRIX = "matrix"
 LOCAL = "local"
 # 可交付的标准云后端（火山方舟 Seedream / 阿里百炼），对应工厂键 http_api。
-# matrix 是 MiniMax 连接器，只作演示参照、不可交付；配了
+# matrix 是 MiniMax 连接器，只作演示参照、不可交付（裁决见 docs/项目史.md §4）；配了
 # 标准 API key 后，云端决策默认改走 http_api。二者同属"云端"这一层，规则表
 # 仍指向云端语义，不各写一份规则。值必须与 provider.build_provider 的键一致。
 API = "http_api"
@@ -92,7 +91,7 @@ RULES: tuple[Rule, ...] = (
     Rule(
         "R3_STRONG_IDENTITY",
         MATRIX,
-        "强人物一致：API 身份保持实测优于本地栈（数据见台账 face_similarity 列与模型选型文档）",
+        "强人物一致：API 身份保持实测优于本地栈（数据见台账 face_similarity 列与 README 第 6 节）",
         _strong_identity,
     ),
     Rule(
@@ -213,6 +212,17 @@ def decide_provider(
 
     # 选中的后端不可用 → 回退到**另一层**（云端↔本地），并写明原因（不能静默换掉）
     other = LOCAL if decision.provider in _CLOUD_TIER else _cloud_target(spec, check)[0]
+    # 但**不出网任务不允许回退到云端**：no_cloud 是合规要求（真实素颜对比素材
+    # 只能在院内出），"本地栈不可用"不能成为把图发出去的理由——合规 > 可用性。
+    # 宁可让这条任务失败并报清楚，也不静默上云。
+    # 约束有两个来源，都得算进来：任务自带 `spec.no_cloud`（域包标记），
+    # 以及本次运行的全局开关 `--no-cloud`（走 R0_NO_CLOUD_GLOBAL，不改 spec）。
+    # 只认前者会留个洞：全局 --no-cloud 的任务照样可能被回退到云端。
+    if (no_cloud or spec.no_cloud) and other in _CLOUD_TIER:
+        raise RuntimeError(
+            f"不出网任务（no_cloud）只能走本地栈，但本地栈不可用：{why}；"
+            f"拒绝回退到云端 {other}（合规优先于可用性，请修好本地栈后重跑）"
+        )
     ok_other, why_other = check(other)
     if not ok_other:
         raise RuntimeError(

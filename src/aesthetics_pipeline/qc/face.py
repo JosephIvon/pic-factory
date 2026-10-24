@@ -73,7 +73,7 @@ def _detect(path: str | Path) -> list[dict[str, Any]] | None:
 
     # **必须转成 BGR 再送进 insightface**：它的检测器按 OpenCV 惯例训练（输入是 BGR）。
     # 传 RGB 等于把肤色通道反了，实测会**整张脸都检不到**
-    # （out/local_images/a004118539d12515.png：RGB 检 0 张 / BGR 检 1 张）。
+    # （evidence/15_local_a004118539d12515.png：RGB 检 0 张 / BGR 检 1 张）。
     # 换脸那条链路用 cv2.imread（本来就是 BGR），两边必须一致。
     rgb = np.asarray(_pil(path).convert("RGB"))
     img = rgb[:, :, ::-1].copy()
@@ -141,13 +141,22 @@ class FaceGate:
 
         用于文生图任务：那些任务本来就没有指定人物，拿定妆照去比相似度
         没有意义（实测会把随机路人判成"不像目标人物"而误杀）。
+
+        `skipped` 与 `check()` 同一把尺：**没检成**（模型不可用）时为 True，
+        区别于"检了、确实没有"（count == 0）。
         """
         faces = _detect(candidate)
         if faces is None:
-            return {"available": False, "count": None, "reason": "人脸模型不可用"}
+            return {
+                "available": False,
+                "count": None,
+                "skipped": True,
+                "reason": "人脸模型不可用",
+            }
         return {
             "available": True,
             "count": len(faces),
+            "skipped": False,
             "reason": "" if faces else "画面中未检出人脸",
         }
 
@@ -192,11 +201,36 @@ def missing_face_reason(has_character: bool, count: int | None) -> str | None:
     **「检不到就跳过」不等于「合格」**：那是"没法校验身份"，
     不是"身份没问题"。人物任务画面里没有人脸 = 交付物里没有那个人，
     必须拦。（count 为 None 表示人脸模型不可用 —— 那是"没法判断"，
-    这时不当成"没有人脸"，不误杀。）
+    这时不当成"没有人脸"，不误杀；模型不可用由 `face_gate_unavailable_reason` 拦。）
     """
     if has_character and count == 0:
         return "人物任务画面未检出人脸：身份一致性无从校验（不放行）"
     return None
+
+
+def face_gate_unavailable_reason(
+    has_character: bool, face_detail: dict[str, Any]
+) -> str | None:
+    """人物任务但人脸闸**没给出判定** → 拒收理由；不该拒时返回 None。
+
+    与 OCR 闸同口径（`qc/rules.py`：「文字闸未执行，不能记为合格」）：
+    **闸门没跑 ≠ 合格**。人物任务的身份一致性没被校验过，就不能记为合格。
+
+    三种"没法判断"要分得开（别把"没检成"说成"没有人脸"）：
+      * count is None  —— 人脸模型不可用（连检都没检）；
+      * count == 0     —— 画面里确实没有人脸（`missing_face_reason` 已给理由）；
+      * count > 0 且 skipped —— 参考照检不到人脸。
+
+    非人物任务不适用：场景图不需要身份校验，不能因为缺人脸模型被整批拒收。
+    """
+    if not has_character or not face_detail.get("skipped"):
+        return None
+    count = face_detail.get("count")
+    if count is None:
+        return "人脸模型不可用：人脸闸未执行，不能记为合格（装好模型后重跑 qc --reset）"
+    if count == 0:
+        return None  # missing_face_reason 已覆盖
+    return "参考照检不到人脸：身份一致性无从校验（不放行）"
 
 
 def should_reject_on_identity(face_result: dict[str, Any], phase: str) -> bool:
@@ -213,9 +247,14 @@ def should_reject_on_identity(face_result: dict[str, Any], phase: str) -> bool:
       "post_swap" —— 出厂判定。换脸后仍低于阈值才拒收（此时比对的是最终产物）。
                     换脸后分数实测 0.8787~0.9016，与阈值差得很远，
                     所以这一步实际校验的是"**换脸有没有生效**"，不是身份判别。
+
+    **skipped（闸门没跑成）在出厂阶段必须拒收**：与 OCR 闸同口径——
+    「文字闸未执行，不能记为合格」；人脸闸同理，"换脸换不出脸"或
+    "人脸模型不可用"都意味着最终产物**没被校验过**，不能出厂放行。
+    生成阶段仍然不拦（那里本来就不因身份拒收）。
     """
     if face_result.get("skipped"):
-        return False
+        return phase == "post_swap"
     if phase == "generate":
         return False
     score = face_result.get("similarity")

@@ -1,4 +1,4 @@
-"""generate 与成本闸的接线回归（两条负向锚点，下文记作 M1/M2）。
+"""generate 与成本闸的接线回归（Trae 评审 M1/M2 裁决落点）。
 
 M1：http_api 后端的 BudgetGuard 必须由 cli 用**台账连接**构造后注入。
 provider 内部兜底的 `BudgetGuard.from_env()`（无 conn）是零基数守卫——
@@ -20,6 +20,7 @@ from typer.testing import CliRunner
 from aesthetics_pipeline import config, ledger, taskspec
 from aesthetics_pipeline.cli import app
 from aesthetics_pipeline.cost_guard import BudgetGuard
+from aesthetics_pipeline.model_choice import choose_model
 from aesthetics_pipeline.models import GenItem, GenOutcome
 
 runner = CliRunner()
@@ -160,3 +161,91 @@ def test_failed_row_est_cost_is_none_not_positive(tmp_path, monkeypatch) -> None
         # 熔断基数口径：None 不计钱
     with ledger.connect(db) as conn:
         assert BudgetGuard._spent_from_ledger(conn) == 0.0
+
+
+class RecordingOkBackend:
+    """记录本批实际送进后端的任务与档位，并全部成功（用于测幂等跳过口径）。"""
+
+    name = "http_api"
+
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str | None]] = []
+
+    def generate(self, items: list[GenItem], model_ids: list[str | None] | None = None):
+        self.sent.extend(
+            (i.task.idempotency_key, model_ids[j] if model_ids else None)
+            for j, i in enumerate(items)
+        )
+        return [
+            GenOutcome(
+                task=i.task, ok=True, source_provider="http_api",
+                model_id=(model_ids[j] if model_ids else None),
+                file_name=f"{i.task.idempotency_key}.jpg",
+                local_path=f"out/{i.task.idempotency_key}.jpg",
+                seconds=0.1,
+            )
+            for j, i in enumerate(items)
+        ]
+
+
+def _seed(db: Path, key: str, model_id: str | None) -> None:
+    with ledger.connect(db) as conn:
+        ledger.record_asset(
+            conn,
+            {"idempotency_key": key, "provider": "http_api",
+             "model_id": model_id, "local_path": "out/seed.jpg"},
+        )
+
+
+def test_skip_existing_is_per_model(tmp_path, monkeypatch) -> None:
+    """同档位已产出 → 跳过；换档位 → 必须重新生成，并打印提示。"""
+    db = tmp_path / "t.db"
+    _env(tmp_path, monkeypatch)
+    backend = RecordingOkBackend()
+    _patched_build(monkeypatch, {}, backend)
+
+    spec = taskspec.expand()[0]
+    key = spec.idempotency_key
+    chosen = choose_model(spec).model_id
+
+    _seed(db, key, chosen)  # 当前档已有产出
+    res = runner.invoke(app, ["generate", "--provider", "http_api", "--retry", "0",
+                              "--db", str(db)])
+    assert res.exit_code == 0, res.output
+    assert backend.sent == [], "同档位已产出必须跳过（不能重复花钱）"
+
+    # 换档位：同一幂等键、另一个模型 → 旧产出不能算已完成
+    with ledger.connect(db) as conn:
+        conn.execute(
+            "UPDATE assets SET model_id = 'qwen-image-3.0-pro' WHERE idempotency_key = ?",
+            (key,),
+        )
+    res = runner.invoke(app, ["generate", "--provider", "http_api", "--retry", "0",
+                              "--db", str(db)])
+    assert res.exit_code == 0, res.output
+    assert [k for k, _ in backend.sent] == [key], "换模型后必须重新生成"
+    assert backend.sent[0][1] == chosen
+    # rich 会按终端宽度折行，断言只取不会被折断的短片段
+    assert "没有产出" in res.output
+
+
+def test_legacy_row_without_model_is_regenerated_with_notice(tmp_path, monkeypatch) -> None:
+    """升级前的行没记 model_id：精确匹配不命中 → 重出一次并明确提示。"""
+    db = tmp_path / "t.db"
+    _env(tmp_path, monkeypatch)
+    backend = RecordingOkBackend()
+    _patched_build(monkeypatch, {}, backend)
+
+    key = taskspec.expand()[0].idempotency_key
+    _seed(db, key, None)
+
+    res = runner.invoke(app, ["generate", "--provider", "http_api", "--retry", "0",
+                              "--db", str(db)])
+    assert res.exit_code == 0, res.output
+    assert [k for k, _ in backend.sent] == [key]
+    assert "model_id" in res.output
+    with ledger.connect(db) as conn:
+        rows = ledger.assets(conn, "provider = 'http_api'")
+    # 旧行（无档位）仍在，重出行是**另一条**（主键含 variant）——这正是"多档并存"。
+    assert len(rows) == 2
+    assert any(row["model_id"] for row in rows), "重出后必须记下实际档位"

@@ -21,6 +21,7 @@ from aesthetics_pipeline.provider.http_api import (
     sniff_ext,
 )
 from aesthetics_pipeline.provider.models_spec import get as get_spec
+from aesthetics_pipeline.provider.cache import read_cache
 from aesthetics_pipeline import ledger
 
 # 一段假 JPEG（魔数 FFD8）与假 PNG（魔数 89504E47）
@@ -151,10 +152,10 @@ def test_ark_sync_success(tmp_path) -> None:
     assert out.ok is True
     assert out.local_path and Path(out.local_path).exists()
     assert out.source_provider == "http_api"
-    # 假 JPEG 落盘扩展名必须是 .jpg（不信请求里的 .png）
-    assert out.file_name.endswith("__http_api.jpg")
-    # 缓存带档位：断网回放要能还原"这张是哪个档生成的"
-    entry = json.loads((tmp_path / "cache" / "http_api" / "arkok.json").read_text(encoding="utf-8"))
+    # 假 JPEG 落盘扩展名必须是 .jpg（不信请求里的 .png），且文件名带档位
+    assert out.file_name == "arkok__http_api__doubao-seedream-4-0.jpg"
+    # 缓存带档位（Trae S4）：断网回放要能还原"这张是哪个档生成的"
+    entry = read_cache(tmp_path / "cache", "arkok", "http_api")
     assert entry["model_id"] == "doubao-seedream-4-0"
 
 
@@ -171,7 +172,7 @@ def test_ark_failure_not_billed_not_cached(tmp_path) -> None:
     db = tmp_path / "t.db"
     with ledger.connect(db) as conn:
         # 缓存目录里没有该 provider 的成功条目可回放 → 不会被认成已完成
-        assert (tmp_path / "cache" / "http_api" / "arkfail.json").exists() is False
+        assert not list((tmp_path / "cache" / "http_api").glob("arkfail*.json"))
 
 
 def test_ark_folds_negative_into_prompt_no_field(tmp_path) -> None:
@@ -198,7 +199,8 @@ def test_wan_async_success_forces_n1_and_watermark(tmp_path) -> None:
     p, dl = build_provider(tmp_path, wan=wan)
     out = p.generate([make_item("wanok")], model_ids=["qwen-image-3.0"])[0]
     assert out.ok is True
-    assert out.file_name.endswith("__http_api.jpg")
+    assert out.file_name.endswith(".jpg")
+    assert "__http_api__qwen-image-3.0.jpg" in out.file_name
     params = wan.post_calls[0]["json"]["parameters"]
     assert params["n"] == 1                    # 关键坑：默认 n=4 必须强制 1
     assert params["watermark"] is True         # 默认 false → 交付红线显式开
@@ -225,7 +227,7 @@ def test_wan_signed_url_download_has_no_auth_header(tmp_path) -> None:
     assert dl.get_calls, "下载没有被调用"
     assert "Authorization" not in dl.get_calls[0]["headers"]
     # 落盘按 PNG 魔数定扩展名
-    files = list((tmp_path / "images").glob("wandl__http_api.*"))
+    files = list((tmp_path / "images").glob("wandl__http_api*"))
     assert files and files[0].suffix == ".png"
 
 
@@ -310,13 +312,15 @@ def test_concurrent_batch_success_order_and_charges(tmp_path, monkeypatch) -> No
 
     assert [o.task.idempotency_key for o in outs] == [f"cc{i}" for i in range(8)]
     assert all(o.ok is True for o in outs)
-    assert [o.file_name for o in outs] == [f"cc{i}__http_api.jpg" for i in range(8)]
+    assert [o.file_name for o in outs] == [
+        f"cc{i}__http_api__{SEEDREAM}.jpg" for i in range(8)
+    ]
     assert len(ark.post_calls) == 8 and len(dl.get_calls) == 8
     assert budget.spent == pytest.approx(8 * SEEDREAM_UNIT)
     # 缓存全部落账且带 model_id（回放口径不因并发而漏键）
     for i in range(8):
-        entry = json.loads((tmp_path / "cache" / "http_api" / f"cc{i}.json").read_text(encoding="utf-8"))
-        assert entry["model_id"] == SEEDREAM
+        entry = read_cache(tmp_path / "cache", f"cc{i}", "http_api")
+        assert entry is not None and entry["model_id"] == SEEDREAM
 
 
 def test_concurrent_mixed_download_failure_refunds_only_failures(tmp_path, monkeypatch) -> None:
@@ -356,13 +360,13 @@ def test_concurrent_mixed_download_failure_refunds_only_failures(tmp_path, monke
         if i % 2 == 0:
             assert o.ok is False and "下载失败" in (o.error or "")
         else:
-            assert o.ok is True and o.file_name == f"mix{i}__http_api.jpg"
+            assert o.ok is True and o.file_name == f"mix{i}__http_api__{SEEDREAM}.jpg"
     assert len(ark.post_calls) == 8                      # 8 张都发了请求（预扣通过）
     assert len(dl.get_calls) == 8                        # 含 4 次失败的下载
     # 失败零扣费：4 个失败项的预扣全部退还，总额只等于 4 个成功项
     assert budget.spent == pytest.approx(4 * SEEDREAM_UNIT)
     for i in range(8):
-        assert (tmp_path / "cache" / "http_api" / f"mix{i}.json").exists() is (i % 2 == 1)
+        assert bool(list((tmp_path / "cache" / "http_api").glob(f"mix{i}*.json"))) is (i % 2 == 1)
 
 
 def test_concurrent_fuse_admits_exactly_two_of_eight(tmp_path) -> None:

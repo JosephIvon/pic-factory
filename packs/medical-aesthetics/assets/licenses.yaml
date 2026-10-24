@@ -1,0 +1,15 @@
+# 角色授权登记表（交付前检查读取；`aesthetics publish` 也会按此拦截）
+#
+# 商用红线：**没有授权记录的角色，不得进入发布包**。
+# 每个角色至少要有：来源（真人/虚拟）、许可范围、是否可商用、肖像同意情况。
+# `commercial_use: false` 的角色允许留在演示链路里，但发布包会被拦下。
+characters:
+  lin:
+    display_name: 林（虚拟人设）
+    kind: synthetic            # synthetic=AI 生成虚拟人 | real=真人（必须附 consent）
+    source: "AI 生成（Seedream 4.0 定妆照），非真人模特"
+    license: "本项目自有虚拟人设，可商用"
+    commercial_use: true
+    consent: "不涉及真人肖像，无需肖像权同意"
+    valid_until: null           # null=长期有效；填日期则到期后检查失败
+    notes: "参考图 evidence/01_t2i_baseline.png 为本项目生成资产"

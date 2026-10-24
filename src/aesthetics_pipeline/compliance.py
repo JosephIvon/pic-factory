@@ -104,6 +104,54 @@ def check_row(row: dict[str, Any], copy_row: dict[str, Any] | None, rules: dict[
     return issues
 
 
+def check_character_license(row: dict[str, Any], pack: Any) -> list[Issue]:
+    """角色授权检查：商用红线。
+
+    规则很简单，但必须在**发布前**拦：
+      * 用了角色，但包里没有该角色的授权记录 → MISSING_LICENSE；
+      * 有记录但 `commercial_use: false` → LICENSE_NOT_COMMERCIAL；
+      * 记录写了到期日且已过期 → LICENSE_EXPIRED。
+
+    没有域包（legacy 模式）时跳过：没有授权表可查，不假装查过。
+    """
+    if pack is None:
+        return []
+    character = row.get("character")
+    if not character:
+        return []
+    key = str(row.get("idempotency_key") or "")
+    provider = str(row.get("provider") or "unknown")
+    entries = (getattr(pack, "licenses", None) or {}).get("characters") or {}
+    entry = entries.get(str(character))
+    if not entry:
+        return [
+            Issue(
+                "MISSING_LICENSE", SEVERITY_ERROR, key, provider,
+                f"角色 {character!r} 没有授权登记（pack={getattr(pack, 'name', '-')} 的 licenses.yaml）",
+            )
+        ]
+    issues: list[Issue] = []
+    if entry.get("commercial_use") is False:
+        issues.append(
+            Issue("LICENSE_NOT_COMMERCIAL", SEVERITY_ERROR, key, provider,
+                  f"角色 {character!r} 标注为不可商用，不能进发布包")
+        )
+    valid_until = entry.get("valid_until")
+    if valid_until:
+        from datetime import date
+
+        try:
+            expired = date.fromisoformat(str(valid_until)) < date.today()
+        except ValueError:
+            expired = False
+        if expired:
+            issues.append(
+                Issue("LICENSE_EXPIRED", SEVERITY_ERROR, key, provider,
+                      f"角色 {character!r} 授权已于 {valid_until} 到期")
+            )
+    return issues
+
+
 def audit(
     conn: sqlite3.Connection,
     *,
@@ -125,6 +173,7 @@ def audit(
     issues: list[Issue] = []
     for row in rows:
         issues.extend(check_row(row, copies.get(str(row.get("idempotency_key"))), rules))
+        issues.extend(check_character_license(row, resolved))
 
     by_code: dict[str, int] = {}
     for issue in issues:

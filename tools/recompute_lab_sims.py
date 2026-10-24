@@ -1,8 +1,9 @@
 # 用 pic-factory 生产度量（insightface + BGR + gallery 选脸）复算实验台 50 张。
 #
-# 出处与生命周期：输入来自外部实验台目录（未入库的 85MB 原图），该目录已不维护——
+# 出处与生命周期：输入来自**旧 DeepSeek 实验台**（源目录已于 2026-10-24 删除，
+# 未入库的 85MB 原图随之删除）。因此这里**不再指向任何路径**：
 # 结论以已入库的 docs/ab-evidence/model-sim-recompute.json 为准，脚本留档方法学。
-# 复跑请传 --lab-dir 指向实验台残留目录。
+# 真要重跑，必须显式 --lab-dir 指向你保留的实验台原图目录。
 import argparse
 import json
 import sys
@@ -11,8 +12,9 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description="复算实验台 50 张一致性（生产度量口径）")
 parser.add_argument(
     "--lab-dir",
-    default=None,
-    help="实验台 ab/ 目录（含 refs/persona_lin.png 与 out/ab/results.jsonl）",
+    required=True,
+    help="旧实验台 ab/ 目录（含 refs/persona_lin.png 与 out/ab/results.jsonl）；"
+    "源仓库已删除，需自备原图；只有压缩版时无法重跑（分数以 JSON 为准）",
 )
 parser.add_argument(
     "--out",
@@ -22,9 +24,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-if not args.lab_dir:
-    raise SystemExit("--lab-dir 必填：指向实验台 ab/ 目录（含 refs/persona_lin.png 与 "
-                     "out/ab/results.jsonl）；原图未入库，本脚本只留档方法学")
 LAB = Path(args.lab_dir)
 REF = LAB / "refs" / "persona_lin.png"
 LEDGER = LAB / "out" / "ab" / "results.jsonl"

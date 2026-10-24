@@ -34,13 +34,16 @@ MODEL_NAME = "inswapper_128.onnx"
 MODEL_URL = "https://github.com/deepinsight/insightface/releases/download/v0.7/inswapper_128.onnx"
 
 
-def swapped_output_path(provider: str, key: str, out_dir: Path) -> Path:
+def swapped_output_path(
+    provider: str, key: str, out_dir: Path, model_id: str | None = None
+) -> Path:
     """换脸产物的落盘路径。
 
-    **provider 必须进路径**：matrix 与 local 两条线共用同一幂等键，
-    不带 provider 会互相覆盖（台账复合主键不冲突，磁盘会冲突）。
+    **provider 与档位都必须进路径**：同一任务可能有多条资产（不同后端、
+    同一后端的不同模型），不带它们会互相覆盖（台账主键不冲突，磁盘会冲突）。
     """
-    return Path(out_dir) / "swapped" / (provider or "unknown") / f"{key}.png"
+    name = f"{key}__{model_id}.png" if model_id else f"{key}.png"
+    return Path(out_dir) / "swapped" / (provider or "unknown") / name
 
 
 class FaceSwapper:

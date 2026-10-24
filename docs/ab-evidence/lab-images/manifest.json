@@ -1,5 +1,5 @@
 {
-  "provenance": "选型实验台原始产出的压缩版（85MB 原图三选一，2026-10-24 决定压缩入库）。源为外部实验台目录（未入库），该目录删除后本目录即唯一原件级现场。",
+  "provenance": "DeepSeek 选型实验台原始产出压缩版（85MB 三选一，2026-10-24 用户选 a：压缩入库）。源实验台 D:\\workspace\\picfactory 已于 2026-10-24 删除；本目录是同一批图的唯一现场。",
   "method": "PIL 长边1024 JPEG q88 progressive；分数/标定均以原图为准（见 model-sim-recompute.json / threshold-calibration-production.json），本目录供展示与人工复核，不用于再计算",
   "calibration_anchor_note": "阈值锚样本另有无损语义的 calib-samples/（生产尺 T=0.57 可在其上复现）；本目录是同一批图再加盲测/exp/debug 全量压缩版",
   "skipped_already_migrated": [

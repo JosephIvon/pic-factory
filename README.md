@@ -4,7 +4,7 @@
 
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-> **174 项全过**——本地实跑口径（`pytest -q`，Python 3.11+），并在 `python:3.11` 的 Linux 容器里复验过。
+> **217 项全过**——本地实跑口径（`pytest -q`，Python 3.11+），并在 `python:3.11` 的 Linux 容器里复验过。
 > CI 门禁（`.github/workflows/ci.yml`：pytest / docker build / 离线 replay 冒烟 / 密钥泄漏扫描）已在 GitHub
 > 真实触发。首跑（workflow run #1）暴露两处只在 Linux 上现形的问题并已修：绝对路径断言写死了 Windows
 > 路径语法（POSIX 上同一个字符串是**相对**路径），以及缺 `libgl1` 时 OCR 引擎加载失败——后者更阴险，
@@ -16,7 +16,7 @@
 行业内容（本地生活、零售、医美等）的批量图文生产卡在一个三角上：
 
 - **真实感**：模型直出的图要么一眼 AI，要么在镜面、遮挡、无人空间这些结构性难点上露馅；真实感只能靠盲测和闸门逼近，不能靠提示词祈祷。
-- **一致性**：同一个角色/模特跨城市、跨项目、跨渠道复用，"漂不漂"取决于选哪个模型档位——实测里最新档的一致性反而低于上一代（见 `docs/MODEL-CHOICE.md` §9）。
+- **一致性**：同一个角色/模特跨城市、跨项目、跨渠道复用，"漂不漂"取决于选哪个模型档位——生产尺复算里最新一代旗舰的一致性反而垫底（Seedream 5.0 Pro 0.751 < 上一代 4.0 的 0.792，见 `docs/MODEL-CHOICE.md` §9）。
 - **成本**：生图按张计费、没有包月经济（`docs/COST-MODEL.md`），而有的上游 API 默认一次请求出 4 张——不显式设 `n=1` 就是付 4 倍钱（`http_api` 强制显式并配计费断言）。
 
 这个项目的回答是把三角拆成三个工程问题：选型做成**规则表 + 实测证据**，质量做成**出厂闸门**，钱做成**台账与熔断**。每一张图"为什么走这条线、花了几分钱、过没过闸"都可逐条回查。
@@ -47,9 +47,9 @@ provider/  ── http_api（火山方舟/阿里百炼，交付路径）
 质检闸门： 硬规则闸(尺寸/比例/dhash) │ OCR 文字闸 │ 人脸一致性闸(T=0.57) │ 合规词闸
            VLM 语义分 ── 只作软信号，不拦截
         ▼
-ledger.py（SQLite：幂等键、route_reason、est_cost、qc_verdict、adopted）
+ledger.py（SQLite：幂等键+provider+variant 三元组主键、route_reason、est_cost、qc_verdict、adopted）
         ▼
-report.py（contact_sheet + CSV/JSON） ── panel（抽检台，人工采纳）
+report.py（contact_sheet + CSV/JSON） ── panel（抽检台：跑批任务落库可恢复，人工采纳）
         ▼
 compliance.py 审计 ──► publish 发布包（fail-closed：不过闸不打包）
 ```
@@ -86,11 +86,11 @@ docker compose up --build
 
 ### 模型选型：证据在仓库里，不在口头承诺里
 
-`docs/MODEL-CHOICE.md` 记录了本机实跑 50 张的 A/B：同角色卡、同 10 条 prompt、逐模型的一致性均值/最低/方差/P50/P95/有效单张成本。结论反直觉——一致性最好的不是最新档（Qwen-Image 3.0 Pro 0.888 > 3.0 0.844 > Seedream 4.0 0.757），"按版本号选新"在锁脸任务上不成立。原始证据（逐张分数、盲测标注、复算 JSON）在 `docs/ab-evidence/`。数字仍是单次观测口径，每模型 10 张×1 轮，用于"排除"而非"排名"。
+`docs/MODEL-CHOICE.md` 记录了实跑 50 张的 A/B：同角色卡、同 10 条 prompt、逐模型的一致性均值/最低/方差/P50/P95/有效单张成本，并用生产口径复算过（`docs/ab-evidence/model-sim-recompute.json`，insightface buffalo_l + gallery 选脸）：Qwen-Image 3.0 Pro（剔遮挡均值 0.913）> Qwen-Image 3.0（0.863）> Seedream 5.0 Flash（0.815）> Seedream 4.0（0.792）> Seedream 5.0 Pro（0.751）。结论反直觉——"按版本号选新"在锁脸任务上不成立（最新旗舰垫底）；而 5.0 Flash 早先被记下的低分是实验台取脸伪影，换生产尺后已平反。原始证据（逐张分数、盲测标注、复算 JSON）在 `docs/ab-evidence/`。数字仍是单次观测口径，每模型 10 张×1 轮，用于"排除"而非"排名"。
 
 ### 人脸一致性闸：阈值 0.57 是同域标定出来的
 
-`qc/face.py` 的出厂阈值 **T=0.57**，由 `tools/recalibrate_face_threshold.py` 在同域样本上取间隙中点标定：同域难负样本最高 0.4918，人物合格模型正样本最低（剔遮挡）0.6406（证据：`docs/ab-evidence/threshold-calibration-production.json`）。两点必须诚实：这把尺是生产口径（insightface buffalo_l + gallery 选脸），与实验台口径**不同尺、数字不可互相引用**；负样本当前 n=7，FAR 点估计无统计意义，扩到 150 张前阈值待复核（可用 `AP_FACE_THRESHOLD` 覆盖）。遮挡脸（如贴面膜）ArcFace 不可测，走人工复核而不是自动判死。
+`qc/face.py` 的出厂阈值 **T=0.57**，由 `tools/recalibrate_face_threshold.py` 在同域样本上取间隙中点标定：同域难负样本最高 0.4918，人物合格模型正样本最低（剔遮挡）0.6406（证据：`docs/ab-evidence/threshold-calibration-production.json`）。两点必须诚实：这把尺是生产口径（insightface buffalo_l + gallery 选脸），与实验台口径**不同尺、数字不可互相引用**；负样本当前 n=7，FAR 点估计无统计意义，扩到 150 张前阈值待复核（可用 `AP_FACE_THRESHOLD` 覆盖）。遮挡脸（如贴面膜）ArcFace 不可测，走人工复核而不是自动判死。闸门 fail-closed：权重缺失、引擎不可用一律记显式 skipped 并按不合格处理——「闸门没跑 ≠ 合格」，"跳过"和"通过"在台账上是两个值；而且这把尺跑在**最终出厂图**上（换脸产物复检），不是只验生成原图。
 
 ### 成本熔断 + 计费断言
 
@@ -102,19 +102,20 @@ docker compose up --build
 
 ### 合规审计与发布包：fail-closed
 
-`aesthetics compliance` 对台账逐条审计：免责声明是否在场、图文是否成对、画面内文字、文案禁用词，不过则退出码 1，可直接进 CI。`aesthetics publish` 打发布包（manifest + compliance.json + 人工复核 README + 图 + 文案），审计不过默认拒绝打包（退出码 2），显式 `--allow-violations` 放行的例外会写进 `compliance.json`，不存在"悄悄发出去"。禁用词闸会拦自己——合规声明文本也不能命中词表（有测试钉住）。
+`aesthetics compliance` 对台账逐条审计：免责声明是否在场、图文是否成对、画面内文字、文案禁用词，不过则退出码 1，可直接进 CI。`aesthetics publish` 打发布包（manifest + compliance.json + 人工复核 README + 图 + 文案），审计不过默认拒绝打包（退出码 2），显式 `--allow-violations` 放行的例外会写进 `compliance.json`，不存在"悄悄发出去"。禁用词闸会拦自己——合规声明文本也不能命中词表（有测试钉住）。角色授权也进审计：`licenses.yaml` 里没登记（或不可商用/已过期）的角色进不了发布包，交付前另有 `tools/check_asset_licenses.py` 做全包预检；发布后以 `aesthetics publish-record` 回传渠道与效果，`metrics` / `funnel` 出漏斗报表——发布量、采纳率、转化连成一条可回查的链。
 
 ### replay：离线是第一条被验证的路线，不是装饰
 
-`provider/replay.py` 只回放真实后端写下过的缓存（`fixtures/` 随仓库分发），不调任何外部服务、不伪造素材。断网、无 key、配额耗尽时，生成→质检→台账→报表全链路照常跑通，流程不打折。CI 的 `replay-smoke` job 就以此严格离线运行（故意不装 insightface，人脸闸走显式 skipped 路径——"跳过"和"通过"在台账上是两个值）。
+`provider/replay.py` 只回放真实后端写下过的缓存（`fixtures/` 随仓库分发），不调任何外部服务、不伪造素材。断网、无 key、配额耗尽时，生成→质检→台账→报表全链路照常跑通，流程不打折。CI 的 `replay-smoke` job 就以此严格离线运行（故意不装 insightface：人脸闸走显式 skipped 路径，人物任务必须拒收、理由写明"人脸闸未执行"；同时断言 OCR 文字闸真的执行过——两条"假绿防线"都钉进 CI 台账核验，"跳过"和"通过"在台账上是两个值）。
 
 ## 测试
 
 ```bash
 pip install -e ".[qc,panel,dev]"
-pytest -q                    # 174 项
-python tools/check_readme_test_count.py            # README 测试数防漂移门禁
-python tools/check_readme_test_count.py --update   # 改完测试后同步本文件
+pytest -q                    # 217 项
+python tools/check_readme_test_count.py            # README 测试数防漂移门禁（--update 同步）
+python tools/check_doc_numbers.py                  # 文档口径数字防漂移门禁
+python tools/check_asset_licenses.py               # 域包角色授权检查（可商用/同意/有效期）
 ```
 
 Linux 上 `[qc]` extra 还需要系统 GL 运行库（rapidocr/insightface 依赖的 cv2 要 `libGL.so.1`）：
@@ -125,7 +126,7 @@ sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0   # Debian/U
 
 缺它不会静默放行——文字闸会显式记"OCR 引擎不可用：文字闸未执行，不能记为合格"并把每条拦下（宁可全拦，不假装验过）。详见 [DEPLOY.md](DEPLOY.md) 排错表。
 
-- 数量以工具实测为准：本 README 写 174，是写作时 `python -m pytest --collect-only -q`（收集 174）与 `pytest -q`（174 passed）的实测值；CI 里 `check_readme_test_count.py` 会在数字漂移时报错。
+- 数量以工具实测为准：本 README 写 217，是写作时 `python -m pytest --collect-only -q`（收集 217）与 `pytest -q`（217 passed）的实测值；CI 里 `check_readme_test_count.py` 会在数字漂移时报错。
 - 全程离线可跑：人脸闸用例 monkeypatch 注入假检测器，不触发权重下载；`tests/test_adversarial.py` 是对抗演练（伪造计费张数、劫持幂等键等负向锚点）。
 - 覆盖分布可看 `tests/`：路由/选型/台账/成本/HTTP 适配/四闸/域包/合规/面板/CLI 接线各有专档。
 
@@ -137,7 +138,7 @@ sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0   # Debian/U
 - **合规词表未经法务**：免责声明是子串检查，只保证"该说的话没丢"，不保证措辞被法务认可；画面侧规则（forbidden_motifs）目前是人工复核清单，不做自动判定。
 - **本地栈真实感有上限**：SDXL-Turbo 为 4 步蒸馏模型，偏"塑料感"；换写实 checkpoint 后更"像照片"但耗时 1.9 倍、图生图身份分反而更低（对比图见 `evidence/`，判定留给盲评）。
 - **统计口径小**：A/B 每臂 10 张、盲测 1 人 20 张、人脸负样本 n=7，都是方向性结论；同配置跨次方差可达 0.2，"排名"需 3 次重复复核。
-- **已知缺口**：域包 `assets/` 的授权字段未接入流程检查；模型版本会漂移，承诺的是可追溯（参数快照+模型版本+请求 ID）而非像素级复现。
+- **已知缺口**：模型版本会漂移，承诺的是可追溯（参数快照+模型版本+请求 ID）而非像素级复现；人脸闸负样本 n=7 待扩，扩样前阈值待复核（见上节）。
 
 ## 许可
 
@@ -152,8 +153,8 @@ src/aesthetics_pipeline/   核心：taskspec/routing/model_choice/provider/qc/le
 packs/                     行业域包（医美 + 零售示例；AP_PACK 选用，未设走旧路径）
 prompts/ data/             默认矩阵与画面提示词（域包引入前的旧路径）
 tests/                     回归测试（见上节）
-docs/                      MODEL-CHOICE / COST-MODEL / DOMAIN-PACKS / ab-evidence 实测证据
-tools/                     A/B 实验台、阈值重标定、README 防漂移、本地 CI 等等价脚本
+docs/                      MODEL-CHOICE / COST-MODEL / DOMAIN-PACKS / 项目史 / 对接手册 / 对接清单 / ab-evidence 实测证据
+tools/                     A/B 实验台、阈值重标定、授权检查、文档数字防漂移、本地 CI 等等价脚本
 fixtures/ evidence/        离线回放缓存与实验证据图（随仓库分发）
 .github/workflows/ci.yml   CI 门禁定义（推送 GitHub 后生效）
 DEPLOY.md                  部署 · 排错 · 维护

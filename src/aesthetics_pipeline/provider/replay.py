@@ -35,25 +35,32 @@ class ReplayProvider:
         out_dir: Path | None = None,
         extra_cache_dirs: tuple[Path, ...] = (),
         prefer_provider: str | None = None,
+        model_id: str | None = None,
     ) -> None:
         self.out_dir = Path(out_dir or OUT_DIR)
         self.cache_dirs = [self.out_dir / "cache", *extra_cache_dirs]
         if not extra_cache_dirs:
             self.cache_dirs.append(REPO_ROOT / "fixtures" / "cache")
         self.prefer_provider = prefer_provider
+        # 指定档位时只回放该档的缓存（多档并存时不会拿别的档冒充）。
+        self.model_id = model_id
 
-    def _find(self, key: str) -> dict | None:
+    def _find(self, key: str, model_id: str | None = None) -> dict | None:
+        wanted = model_id or self.model_id
         for cache_dir in self.cache_dirs:
-            entry = read_cache(cache_dir, key, self.prefer_provider)
+            entry = read_cache(cache_dir, key, self.prefer_provider, wanted)
             if entry is not None:
                 return entry
         return None
 
-    def generate(self, items: list[GenItem]) -> list[GenOutcome]:
+    def generate(
+        self, items: list[GenItem], model_ids: list[str | None] | None = None
+    ) -> list[GenOutcome]:
         outcomes: list[GenOutcome] = []
-        for item in items:
+        for index, item in enumerate(items):
             key = item.task.idempotency_key
-            entry = self._find(key)
+            wanted = model_ids[index] if model_ids else None
+            entry = self._find(key, wanted)
             if entry is None:
                 outcomes.append(
                     GenOutcome(task=item.task, ok=False, error="回放缓存缺失（该任务尚未真实生成过）")
@@ -75,7 +82,7 @@ class ReplayProvider:
                     seconds=float(entry.get("seconds", 0.0)),
                     # 回放不改归属：仍是原后端生成的同一张图；
                     # 档位照搬缓存条目——http_api 的图回放后仍按实际档位
-                    # 落账（同键同 provider 是 upsert，不会双计）。
+                    # 落账（同键同 provider 是 upsert，不会双计，Trae S4）。
                     model_id=entry.get("model_id"),
                     source_provider=entry.get("provider") or "matrix",
                 )

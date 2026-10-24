@@ -140,8 +140,23 @@ def test_generate_rejects_bad_input(client):
     assert client.post("/api/generate", json={"provider": "bogus"}).status_code == 400
 
 
+def test_generate_accepts_deliverable_http_api_provider(client, monkeypatch):
+    """白名单必须与 CLI 的 `--provider http_api` 对称。
+
+    曾经面板只允许 auto/matrix/local/replay：交付环境想强制走标准 API
+    只能绕到命令行，面板这条路等于缺一半。
+    """
+    panel.JOBS.clear()
+    monkeypatch.setattr(panel, "_run_job", lambda job_id, steps: None)
+    resp = client.post(
+        "/api/generate", json={"provider": "http_api", "limit": 1, "chain": False}
+    )
+    assert resp.status_code == 200
+    panel.JOBS.clear()
+
+
 def test_generate_rejects_concurrent_submission(client, monkeypatch):
-    """并发闸：已有 running 批时第二发提交必须 409。
+    """并发闸（Trae S1）：已有 running 批时第二发提交必须 409。
     两条 CLI 并行会互相踩 skip_existing、各持独立成本守卫、抢同一个 SQLite。"""
     monkeypatch.setattr(
         panel, "JOBS", {"busy": {"id": "busy", "status": "running", "steps": [], "log": []}}
@@ -277,4 +292,79 @@ def test_wrong_token_on_index_sets_no_cookie(auth_client):
     resp = auth_client.get("/", params={"token": "nope"})
     assert resp.status_code == 200
     assert "panel_token" not in resp.cookies
-    assert auth_client.get("/api/assets").status_code == 401
+
+
+def test_non_ascii_token_is_401_not_500(auth_client):
+    """非 ASCII 凭证不能把鉴权中间件打崩。
+
+    `secrets.compare_digest` 只接受 ASCII-only 的 str，含中文时抛 TypeError；
+    不先 encode 的话，`?token=中文` 会把"凭证错"变成"服务端 500"。
+    """
+    resp = auth_client.get("/api/assets", params={"token": "中文口令"})
+    assert resp.status_code == 401
+    # 说明：客户端（httpx/h11）不允许把非 ASCII 直接塞进 header，所以
+    # "Bearer 中文" 这条路径在本测试里发不出去；query 路径已覆盖同一段比较逻辑。
+
+
+def test_generate_admission_is_atomic():
+    """并发提交只允许一个进闸（P1-4）。
+    非原子时多个线程可以同时通过 `if any(running)` 再各自登记 job，
+    结果是两条 CLI 并行、双份花钱。这里用 16 个线程同时冲闸，
+    成功的必须恰好一个，其余全是 409。
+    """
+    import threading
+
+    from fastapi import HTTPException
+
+    panel.JOBS.clear()
+    n = 16
+    barrier = threading.Barrier(n)
+    outcomes: list[object] = []
+    record = threading.Lock()
+
+    def submit() -> None:
+        barrier.wait()
+        try:
+            job_id = panel._admit_job([("generate", ["x"])])
+            with record:
+                outcomes.append(job_id)
+        except HTTPException as exc:
+            with record:
+                outcomes.append(exc.status_code)
+
+    threads = [threading.Thread(target=submit) for _ in range(n)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    admitted = [o for o in outcomes if isinstance(o, str)]
+    conflicts = [o for o in outcomes if o == 409]
+    assert len(admitted) == 1, f"同时放行了 {len(admitted)} 条：{admitted}"
+    assert len(conflicts) == n - 1
+    panel.JOBS.clear()
+
+
+def test_job_store_persists_and_recovers(tmp_path, monkeypatch):
+    """任务落库（P0-2）：新进程读得回；残留 running 标成 interrupted。
+
+    没有恢复这一步，面板重启后"已有任务在跑"的 409 会永久生效——
+    内存里根本没有线程，闸门却一直关着。
+    """
+    monkeypatch.setattr(ledger, "DB_PATH", tmp_path / "jobs.db")
+    store = panel.JobStore()
+    store["j1"] = {
+        "id": "j1", "status": "running",
+        "steps": [{"name": "generate", "status": "running"}],
+        "log": ["启动"],
+    }
+
+    fresh = panel.JobStore()  # 模拟进程重启
+    fresh.ensure_ready()
+    assert fresh["j1"]["status"] == "interrupted"
+    assert fresh["j1"]["log"] == ["启动"]
+
+    # 恢复后提交闸不再被“幽灵任务”锁死
+    monkeypatch.setattr(panel, "JOBS", fresh)
+    monkeypatch.setattr(panel, "_run_job", lambda *a: None)
+    assert panel._admit_job([("generate", ["x"])])

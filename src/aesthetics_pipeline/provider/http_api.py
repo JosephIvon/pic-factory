@@ -303,7 +303,7 @@ class StandardApiProvider:
 
         # 5) 下载（不带 auth）+ 按魔数定扩展名 + 幂等键+provider 命名落盘。
         try:
-            local_path = self._download(urls[0], item.task.idempotency_key)
+            local_path = self._download(urls[0], item.task.idempotency_key, spec.model_id)
         except Exception as exc:
             self.budget.refund(spec.unit_cost_cny)
             return GenOutcome(
@@ -411,17 +411,19 @@ class StandardApiProvider:
 
     # ---------- 下载：不带 auth，按魔数定扩展名 ----------
 
-    def _download(self, url: str, key: str) -> Path:
+    def _download(self, url: str, key: str, model_id: str | None = None) -> Path:
         self.images_dir.mkdir(parents=True, exist_ok=True)
         resp = self._downloader().get(url)
         if hasattr(resp, "raise_for_status"):
             resp.raise_for_status()
         data = resp.content
         ext = sniff_ext(data)
-        # 文件名 = 幂等键 + provider（避免上游 F1 那种同键磁盘覆盖）。
-        target = self.images_dir / f"{key}__{self.name}{ext}"
+        # 文件名 = 幂等键 + provider + 档位：同一任务换模型跑是两条独立资产，
+        # 不带档位会互相覆盖（"多档并存"在磁盘上就失效了）。
+        stem = f"{key}__{self.name}" + (f"__{model_id}" if model_id else "")
+        target = self.images_dir / f"{stem}{ext}"
         target.write_bytes(data)
-        for stale in self.images_dir.glob(f"{key}__{self.name}.*"):
+        for stale in self.images_dir.glob(f"{stem}.*"):
             if stale != target and stale.is_file():
                 try:
                     stale.unlink()

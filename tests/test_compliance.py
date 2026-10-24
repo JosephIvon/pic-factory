@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -24,7 +25,7 @@ def env(tmp_path: Path):
     return {"db": db, "img": img, "tmp": tmp_path}
 
 
-def _add_asset(conn, img: Path, *, key="k1", verdict="accepted", text_found=None):
+def _add_asset(conn, img: Path, *, key="k1", verdict="accepted", text_found=None, character=None):
     ledger.record_asset(
         conn,
         {
@@ -35,6 +36,7 @@ def _add_asset(conn, img: Path, *, key="k1", verdict="accepted", text_found=None
             "project": "水光针补水",
             "theme": "术后第7天真实反馈",
             "channel": "xiaohongshu",
+            "character": character,
             "route": "i2i",
             "local_path": str(img),
             "prompt": "a photo of a woman in a clinic",
@@ -194,3 +196,57 @@ def test_medical_pack_copy_passes_its_own_banned_word_gate() -> None:
         )
         assert draft.banned_hits == [], f"{channel} 命中 {draft.banned_hits}"
         assert DISCLAIMER in draft.body
+
+
+# ---------------------------------------------------------------- 角色授权（商用红线）
+
+def _fake_pack(licenses: dict) -> SimpleNamespace:
+    return SimpleNamespace(
+        name="test-pack",
+        licenses=licenses,
+        compliance=load_pack("medical-aesthetics").compliance,
+    )
+
+
+ROW = {"idempotency_key": "k1", "provider": "http_api", "character": "lin"}
+
+
+def test_missing_license_is_blocking() -> None:
+    issues = compliance.check_character_license(ROW, _fake_pack({}))
+    assert [i.code for i in issues] == ["MISSING_LICENSE"]
+
+
+def test_non_commercial_license_is_blocking() -> None:
+    pack = _fake_pack({"characters": {"lin": {"commercial_use": False, "source": "real"}}})
+    assert [i.code for i in compliance.check_character_license(ROW, pack)] == [
+        "LICENSE_NOT_COMMERCIAL"
+    ]
+
+
+def test_expired_license_is_blocking() -> None:
+    pack = _fake_pack(
+        {"characters": {"lin": {"commercial_use": True, "valid_until": "2000-01-01"}}}
+    )
+    assert [i.code for i in compliance.check_character_license(ROW, pack)] == ["LICENSE_EXPIRED"]
+
+
+def test_role_without_character_skips_license_check() -> None:
+    row = {"idempotency_key": "k2", "provider": "http_api", "character": None}
+    assert compliance.check_character_license(row, _fake_pack({})) == []
+
+
+def test_medical_pack_has_license_for_every_character() -> None:
+    """发布前的静态底线：矩阵用到的每个角色都必须出现在 licenses.yaml。"""
+    pack = load_pack("medical-aesthetics")
+    characters = set(pack.matrix.get("characters") or {})
+    licensed = set(pack.licenses.get("characters") or {})
+    assert characters and characters <= licensed
+
+
+def test_audit_blocks_missing_license(env) -> None:
+    with ledger.connect(env["db"]) as conn:
+        _add_asset(conn, env["img"], character="lin")
+        _add_copy(conn, body=DISCLAIMER)
+        result = compliance.audit(conn, pack=_fake_pack({}))
+    assert "MISSING_LICENSE" in result["by_code"]
+    assert result["ok"] is False

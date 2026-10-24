@@ -1,6 +1,6 @@
 """生产度量人脸阈值标定：把 qc/face.py 的"0.35 未标定"换成有样本撑腰的数。
 
-背景（实验台标定史）：`tools/ab` 实验台用 YuNet+w600k 尺标定出 T=0.46
+背景（裁决链见 docs/项目史.md §4）：DeepSeek 实验台用 YuNet+w600k 尺标定出 T=0.46
 （45 域内正 vs 7 同域难负取间隙中点）。方法论采纳——**阈值只从同域难负样本
 的间隙来，跨域标定只会给出假线**（Olivetti 真人 100 张在本尺下最高仅 0.083）；
 但 0.46 这个**数**不能移植：P5 对账两尺 mean_diff≈0.04，而那条间隙总共才 0.042，
@@ -21,19 +21,18 @@ gallery 语义取最相似脸对）对同一批样本重算。
   * 同域难负 = _calib/impostors/*.jpg（同风格但画出来是别人——最难的一类）；
   * 角色卡锚图 = refs/persona_lin.png。
 
-**解耦声明**：`--lab-dir` 指向源实验台目录（外部目录，不随本仓库分发），它需要含
-`out/ab/results.jsonl`、`_calib/impostors/`、`refs/persona_lin.png` 三样。
-本仓库自带的是 `--pack` 产出的**压缩样本包** `docs/ab-evidence/calib-samples/`
-（positives/ + impostors/ + ref_lin.jpg + manifest.json 校验和），JSON 的 `pack` 段
-记的就是"在没有实验台的机器上、只用入库压缩件复算"得到的分数与偏移——刻度可复核，
-但整工具重跑需要自备实验台目录。
+**解耦声明**：源实验台已于 2026-10-24 删除，所以 `--lab-dir` **没有默认值**：
+原图标定必须显式指向你自备的实验台目录。已经入库的压缩样本在
+`docs/ab-evidence/calib-samples/`，其复算分数记在
+`threshold-calibration-production.json` 的 `pack_scores` 字段里（与原图版本的
+偏移一并给出）——日常引用阈值看 JSON 即可，不必重跑。
 
 局限如实入账：同域负样本 n=7，FAR 点估计无统计意义；要声称 FAR≤2% 需
-≥150 个同域负样本（已列入后续计划）。
+≥150 个同域负样本（用户已裁决：开发完成后处理）。
 
 用法：
-  python tools/recalibrate_face_threshold.py --lab-dir <实验台目录>        # 原图标定
-  python tools/recalibrate_face_threshold.py --lab-dir <实验台目录> --pack # 标定 + 生成入库样本包
+  python tools/recalibrate_face_threshold.py                 # 原图标定
+  python tools/recalibrate_face_threshold.py --pack          # 标定 + 生成入库样本包
 """
 
 from __future__ import annotations
@@ -106,20 +105,14 @@ def main() -> None:
             pass
 
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--lab-dir", default=None,
+    ap.add_argument("--lab-dir", required=True,
                     help="实验台根目录（含 out/ab/results.jsonl、_calib/impostors、refs）；"
-                         "本仓库只带压缩样本包，整工具重跑需自备该目录")
+                    "源仓库已删除，需自备原图；只有压缩样本时请直接看 threshold-calibration-production.json")
     ap.add_argument("--out", default=str(REPO / "docs/ab-evidence/threshold-calibration-production.json"))
     ap.add_argument("--pack", action="store_true", help="同时生成入库样本包（压缩件）")
     ap.add_argument("--pack-dir", default=str(REPO / "docs/ab-evidence/calib-samples"))
     args = ap.parse_args()
 
-    if not args.lab_dir:
-        raise SystemExit(
-            "--lab-dir 必填：指向含 out/ab/results.jsonl、_calib/impostors、refs 的实验台目录。"
-            "入库的 docs/ab-evidence/calib-samples/ 是压缩样本包（目录结构不同），"
-            "只能用于复核 JSON 里 pack 段的分数，不能直接喂给本工具。"
-        )
     lab = Path(args.lab_dir)
     from aesthetics_pipeline.model_choice import _PERSONA_BANNED
     from aesthetics_pipeline.qc.face import FaceGate, similarity
@@ -224,7 +217,7 @@ def main() -> None:
             "note": "压缩件复算（人物合格模型口径）：阈值若与原图版不同，以本包为准重跑本工具取 threshold",
         }
         manifest = {
-            "provenance": "由 --lab-dir 指定的外部实验台目录产出（未入库）；本包是唯一可随仓库长期存的刻度样本",
+            "provenance": "源实验台（已于 2026-10-24 删除）；本包是唯一可随仓库长期存的刻度样本",
             "method": summary["method"],
             "files": {str(f.relative_to(pack)): _sha256(f) for f in sorted(pack.rglob("*")) if f.is_file()},
         }

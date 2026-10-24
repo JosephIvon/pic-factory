@@ -1,6 +1,6 @@
 # 域包（Domain Pack）：换行业不改代码
 
-> 状态：已实现并通过 155 项测试（含 14 项域包测试、12 项合规测试）。默认行为不变，`AP_PACK` 显式启用。
+> 状态：已实现并通过全量回归（含域包、合规两组专项测试）。默认行为不变，`AP_PACK` 显式启用。
 
 ## 1. 为什么要有它
 
@@ -127,7 +127,7 @@ copy/…            # 标题/正文/标签
 ## 8. 验收命令（本次交付）
 
 ```bash
-pytest -q                                   # 155 passed（含 14 项域包 + 12 项合规）
+pytest -q                                   # 全量通过（含域包 + 合规专项测试）
 aesthetics packs                            # 列两个包
 AP_PACK=example-retail aesthetics plan -n 3 # 零售矩阵走同一套路由
 aesthetics compliance                       # 审计（退出码可进 CI）

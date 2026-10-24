@@ -117,7 +117,7 @@ def rule_findings(
     details["text_found"] = texts
     # 文字闸"没跑"与"跑了没查到"必须可区分：rapidocr 属 [qc] extra，
     # 缺依赖时 image_has_text 返回 []，静默绿等于最强硬闸凭空消失——
-    # 与人脸闸"检不到人脸=没校验，不是合格"同一条教义。
+    # 与人脸闸"检不到人脸=没校验，不是合格"同一条教义（Trae S2）。
     details["ocr_available"] = _ocr() is not None
     if texts:
         reasons.append(f"画面内出现文字（医美内容翻车点）: {'; '.join(texts[:5])}")

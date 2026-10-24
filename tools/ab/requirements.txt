@@ -1,0 +1,9 @@
+# 运行 ab/ 选型管线的依赖（在 Python 3.14 上实测通过）
+# 生成方式：pip freeze 子集，版本即本仓库所有实测数字的产生环境
+httpx==0.28.1
+pillow==12.3.0
+numpy==2.5.3
+onnxruntime==1.31.0
+opencv-python==5.0.0.93
+# 仅 calibrate.py 用（读 Olivetti .mat）
+scipy==1.18.1

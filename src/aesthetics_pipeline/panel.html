@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>医美 AI 图文闭环 · 控制台</title>
 <!--
-  零 CDN 依赖：断网环境下页面必须照样能开。
+  零 CDN 依赖：内网/断网环境页面必须照样能开。
   零构建步骤：一个文件就是全部前端。
 -->
 <style>
@@ -209,23 +209,24 @@ async function refresh() {
 
   const a = await api("/api/assets");
   $("gallery").innerHTML = (a.items || []).map((it) => `
-    <div class="card" onclick='showDetail(${JSON.stringify(it.key)}, ${JSON.stringify(it.provider)})'>
+    <div class="card" onclick='showDetail(${JSON.stringify(it.key)}, ${JSON.stringify(it.provider)}, ${JSON.stringify(it.model_id || "")})'>
       ${it.image ? `<img src="${esc(it.image)}" loading="lazy" />` : `<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center" class="muted">无图</div>`}
       <div class="cap">
         <div><b>${esc(it.city)}</b> · ${esc(it.project)}</div>
         <div class="muted">${esc(it.theme)}</div>
         <div style="margin-top:4px">
           <span class="tag ${esc(it.provider)}">${esc(it.provider)}</span>
+          ${it.model_id ? `<span class="tag">${esc(it.model_id)}</span>` : ""}
           <span class="pill ${esc(it.verdict)}">${VERDICT[it.verdict] || esc(it.verdict)}</span>
           ${it.swapped ? '<span class="muted">已换脸</span>' : ""}
         </div>
         <div class="muted mono">${esc(it.rule_id || "-")} · ${it.est_cost == null ? "未定价" : yuan(it.est_cost)}</div>
         <div class="adopt-row">
           <button class="mini yes ${it.adopted === "adopted" ? "on" : ""}" title="抽检台：用这张"
-            data-key="${esc(it.key)}" data-provider="${esc(it.provider)}" data-decision="adopted"
+            data-key="${esc(it.key)}" data-provider="${esc(it.provider)}" data-model="${esc(it.model_id || "")}" data-decision="adopted"
             onclick="event.stopPropagation();quickAdopt(this)">用</button>
           <button class="mini no ${it.adopted === "rejected" ? "on" : ""}" title="抽检台：不用这张"
-            data-key="${esc(it.key)}" data-provider="${esc(it.provider)}" data-decision="rejected"
+            data-key="${esc(it.key)}" data-provider="${esc(it.provider)}" data-model="${esc(it.model_id || "")}" data-decision="rejected"
             onclick="event.stopPropagation();quickAdopt(this)">不用</button>
           ${it.adopted
             ? `<span class="pill ${it.adopted === "adopted" ? "adopt-yes" : "adopt-no"}">${ADOPT_CN[it.adopted]}</span>`
@@ -235,13 +236,16 @@ async function refresh() {
     </div>`).join("") || `<span class="muted">还没有产出，先提交一批任务。</span>`;
 }
 
-async function showDetail(key, provider) {
-  CURRENT = { key, provider };
-  const { asset } = await api(`/api/assets/${encodeURIComponent(key)}?provider=${encodeURIComponent(provider)}`);
+async function showDetail(key, provider, model) {
+  CURRENT = { key, provider, model: model || "" };
+  const qs = `provider=${encodeURIComponent(provider)}` +
+    (model ? `&model=${encodeURIComponent(model)}` : "");
+  const { asset } = await api(`/api/assets/${encodeURIComponent(key)}?${qs}`);
   $("dTitle").textContent = `${asset.city} · ${asset.project} · ${asset.theme}`;
   $("dImg").src = asset.image || "";
   const kv = [
     ["后端", asset.provider + (asset.route ? `（${asset.route}）` : "")],
+    ["模型档位", asset.model_id || "（无档位/复用）"],
     ["判定", VERDICT[asset.verdict] || asset.verdict],
     ["人工采纳", asset.adopted ? `${ADOPT_CN[asset.adopted]} · ${asset.adopted_at || ""}` : "未抽检"],
     ["命中规则", asset.rule_id || "-"],
@@ -284,12 +288,12 @@ async function showDetail(key, provider) {
 function closeDrawer() { $("drawer").classList.remove("open"); }
 
 // 采纳/弃用：POST /api/assets/adopt → 面板拼 CLI adopt 子命令走子进程写台账。
-async function postAdopt(key, provider, decision, note) {
+async function postAdopt(key, provider, decision, note, model) {
   try {
     await api("/api/assets/adopt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, provider, decision, note: note || "" }),
+      body: JSON.stringify({ key, provider, model: model || "", decision, note: note || "" }),
     });
     await refresh();
     return true;
@@ -304,18 +308,18 @@ async function quickAdopt(btn) {
   if (btn.dataset.decision === "rejected") {
     note = prompt("不用原因（记入台账，可留空）") || "";
   }
-  const ok = await postAdopt(btn.dataset.key, btn.dataset.provider, btn.dataset.decision, note);
+  const ok = await postAdopt(btn.dataset.key, btn.dataset.provider, btn.dataset.decision, note, btn.dataset.model);
   // 抽屉正开着同一张时同步刷新明细，避免看到旧状态
   if (ok && $("drawer").classList.contains("open") && CURRENT && CURRENT.key === btn.dataset.key) {
-    await showDetail(CURRENT.key, CURRENT.provider);
+    await showDetail(CURRENT.key, CURRENT.provider, CURRENT.model);
   }
 }
 
 async function adoptFromDrawer(decision) {
   if (!CURRENT) return;
   const note = $("dNote") ? $("dNote").value.trim() : "";
-  if (await postAdopt(CURRENT.key, CURRENT.provider, decision, note)) {
-    await showDetail(CURRENT.key, CURRENT.provider);
+  if (await postAdopt(CURRENT.key, CURRENT.provider, decision, note, CURRENT.model)) {
+    await showDetail(CURRENT.key, CURRENT.provider, CURRENT.model);
   }
 }
 
